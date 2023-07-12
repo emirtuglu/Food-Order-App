@@ -1,12 +1,11 @@
 package com;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Objects;
-import java.util.Map;
+import java.util.HashMap;
 
 enum Status {
-    ACTIVE, COMPLETED, CANCELLED
+    ACTIVE, COMPLETED, CANCEL_REQUESTED, CANCELLED
 }
 
 public class Order {
@@ -16,8 +15,7 @@ public class Order {
     private LocalDateTime time;
     private double price;
     private Status status;
-    private static DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
-    private Map<Food, Integer> foods;
+    private HashMap<Food, Integer> foods;
 
     public Order() {
     }
@@ -77,6 +75,10 @@ public class Order {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    public HashMap<Food, Integer> getFoods() {
+        return this.foods;
     }
 
     @Override
