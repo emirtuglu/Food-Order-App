@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
-
 public class Database {
     private static final String URL = "jdbc:postgresql://localhost/foodAppDatabase";
     private static final String USERNAME = "postgres";
@@ -38,8 +37,9 @@ public class Database {
     /**
      * Saves the user object to database after encrypting the password with SHA-512.
      * @param user
+     * @return True if successfully registered
      */
-    public static void saveUser (User user) {
+    public static boolean saveUser (User user) {
         // Hash the password
         byte[] hashedPassword = null;
         byte[] salt = null;
@@ -68,9 +68,11 @@ public class Database {
             pstmt.setBytes(5, hashedPassword);
             pstmt.setBytes(6, salt);
             pstmt.executeUpdate();
+            return true;
 
         } catch (SQLException e) {
             System.out.println(e);
+            return false;
         }
     }
 
@@ -78,8 +80,9 @@ public class Database {
      * Saves the restaurant object to database after encrypting the password with SHA-512.
      * @param restaurant
      * @param addressId address of the restaurant
+     * @return True if successfully registered
      */
-    public static void saveRestaurant (Restaurant restaurant, int addressId) {
+    public static boolean saveRestaurant (Restaurant restaurant, int addressId) {
         // Hash the password
         byte[] hashedPassword = null;
         byte[] salt = null;
@@ -108,9 +111,11 @@ public class Database {
             pstmt.setBytes(5, hashedPassword);
             pstmt.setBytes(6, salt);
             pstmt.executeUpdate();
+            return true;
 
         } catch (SQLException e) {
             System.out.println(e);
+            return false;
         }
     }
 
@@ -227,7 +232,10 @@ public class Database {
             PreparedStatement pstmt = conn.prepareStatement("SELECT password FROM users WHERE mail = ?");
             pstmt.setString(1, mail);
             ResultSet rs = pstmt.executeQuery();
-            return Arrays.equals(hashedPassword, rs.getBytes("password"));
+            if (rs.next()) {
+                return Arrays.equals(hashedPassword, rs.getBytes("password"));
+            }
+            return false;
         }
         catch (SQLException e) {
             return false;
@@ -263,7 +271,11 @@ public class Database {
             PreparedStatement pstmt = conn.prepareStatement("SELECT password FROM restaurants WHERE mail = ?");
             pstmt.setString(1, mail);
             ResultSet rs = pstmt.executeQuery();
-            return Arrays.equals(hashedPassword, rs.getBytes("password"));
+
+            if (rs.next()) {
+                return Arrays.equals(hashedPassword, rs.getBytes("password"));
+            }
+            return false;
         }
         catch (SQLException e) {
             return false;
@@ -281,10 +293,38 @@ public class Database {
             pstmt.setString(1, mail);
             ResultSet rs = pstmt.executeQuery();
 
-            ArrayList<Address> addresses = getAddressesOfUser(rs.getInt("id"));
-            HashMap<Food, Integer> cart = getCartOfUser(rs.getInt("id"));
-            User user = new User(rs.getInt("id"), rs.getString("name"), rs.getString("surname"), rs.getString("phone_number"), mail, addresses, cart);
-            return user;
+            if (rs.next()) {
+                ArrayList<Address> addresses = getAddressesOfUser(rs.getInt("id"));
+                HashMap<Food, Integer> cart = getCartOfUser(rs.getInt("id"));
+                User user = new User(rs.getInt("id"), rs.getString("name"), rs.getString("surname"), rs.getString("phone_number"), mail, addresses, cart);
+                return user;
+            }
+            return null;
+            
+        } catch (SQLException e) {
+            System.out.println(e);
+            return null;
+        }
+    }
+
+    /**
+     * Retrieve user which has the specified id from the database
+     * @param id
+     * @return User object
+     */
+    public static User getUser (int id) {
+        try {
+            PreparedStatement pstmt = conn.prepareStatement("SELECT name, surname, phone_number, mail FROM users WHERE id = ?");
+            pstmt.setInt(1, id);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                ArrayList<Address> addresses = getAddressesOfUser(id);
+                HashMap<Food, Integer> cart = getCartOfUser(id);
+                User user = new User(id, rs.getString("name"), rs.getString("surname"), rs.getString("phone_number"), rs.getString("mail"), addresses, cart);
+                return user;
+            }
+            return null;
             
         } catch (SQLException e) {
             System.out.println(e);
@@ -325,8 +365,11 @@ public class Database {
             PreparedStatement pstmt = conn.prepareStatement("SELECT city, district, full address FROM addresses WHERE id = ?");
             pstmt.setInt(1, id);
             ResultSet rs = pstmt.executeQuery();
-            Address address = new Address(id, rs.getString("city"), rs.getString("district"), rs.getString("full_address"));
-            return address;
+
+            if (rs.next()) {
+                return new Address(id, rs.getString("city"), rs.getString("district"), rs.getString("full_address"));
+            }
+            return null;
             
         } catch (SQLException e) {
             System.out.println(e);
@@ -344,10 +387,13 @@ public class Database {
             PreparedStatement pstmt = conn.prepareStatement("SELECT restaurant_id, name, price, enabled FROM foods WHERE id = ?");
             pstmt.setInt(1, id);
             ResultSet rs = pstmt.executeQuery();
-            
             Restaurant restaurant = getRestaurant(rs.getInt("restaurant_id"));
-            Food food = new Food(id, restaurant, rs.getString("name"), rs.getDouble("price"), rs.getBoolean("enabled"));
-            return food;
+            
+            if (rs.next()) {
+                return new Food(id, restaurant, rs.getString("name"), rs.getDouble("price"), rs.getBoolean("enabled"));
+
+            }
+            return null;
             
         } catch (SQLException e) {
             System.out.println(e);
@@ -367,8 +413,11 @@ public class Database {
             ResultSet rs = pstmt.executeQuery();
             
             Address address = getAddress(rs.getInt("address_id"));
-            Restaurant restaurant = new Restaurant(id, address, rs.getString("name"), rs.getString("phone_number"), rs.getString("mail"));
-            return restaurant;
+            if (rs.next()) {
+                return new Restaurant(id, address, rs.getString("name"), rs.getString("phone_number"), rs.getString("mail"));
+
+            }
+            return null;
             
         } catch (SQLException e) {
             System.out.println(e);
@@ -434,6 +483,71 @@ public class Database {
             return foods;
         }
     }
+
+    /**
+     * Returns the arraylist of orders of the specified restaurant
+     * @param restaurant
+     * @return
+     */
+    public static ArrayList<Order> getOrdersOfRestaurant (Restaurant restaurant) {
+        ArrayList<Order> orders = new ArrayList<Order>();
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+
+        try {
+            PreparedStatement pstmt = conn.prepareStatement("SELECT id, user_id, time, price, status FROM orders WHERE restaurant_id = ?");
+            pstmt.setInt(1, restaurant.getId());
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                User user = getUser(rs.getInt("user_id"));
+                LocalDateTime time = LocalDateTime.parse(rs.getString("time"), dtf);
+                double price = rs.getDouble("price");
+                Status status = Status.valueOf(rs.getString("status"));
+
+                Order order = new Order(id, restaurant, user, time, price, status);
+                orders.add(order);
+            }
+            return orders;
+        } catch (SQLException e) {
+            System.out.println(e);
+            return orders;
+        }
+    }
+
+
+    /**
+     * Returns the arraylist of orders of the specified user
+     * @param restaurant
+     * @return
+     */
+    public static ArrayList<Order> getOrdersOfUser (User user) {
+        ArrayList<Order> orders = new ArrayList<Order>();
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+
+        try {
+            PreparedStatement pstmt = conn.prepareStatement("SELECT id, restaurant_id, time, price, status FROM orders WHERE user_id = ?");
+            pstmt.setInt(1, user.getId());
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                Restaurant restaurant = getRestaurant(rs.getInt("restaurant_id"));
+                LocalDateTime time = LocalDateTime.parse(rs.getString("time"), dtf);
+                double price = rs.getDouble("price");
+                Status status = Status.valueOf(rs.getString("status"));
+
+                Order order = new Order(id, restaurant, user, time, price, status);
+                orders.add(order);
+            }
+            return orders;
+        } catch (SQLException e) {
+            System.out.println(e);
+            return orders;
+        }
+    }
+
+    
 
     /**
      * Save the given order to database
@@ -562,7 +676,7 @@ public class Database {
      * @param restaurant
      * @param food
      */
-    public static void addFood (Restaurant restaurant, Food food) {
+    public static boolean saveFood (Restaurant restaurant, Food food) {
         try {
             PreparedStatement pstmt = conn.prepareStatement("INSERT INTO foods (restaurant_id, name, price, enabled) VALUES (?, ?, ?, ?)");
             pstmt.setInt(1, restaurant.getId());
@@ -570,8 +684,10 @@ public class Database {
             pstmt.setDouble(3, food.getPrice());
             pstmt.setBoolean(4, food.isEnabled());
             pstmt.executeUpdate();
+            return true;
         } catch (SQLException e) {
             System.out.println(e);
+            return false;
         }
     }
 
@@ -579,14 +695,16 @@ public class Database {
      * Removes the specified food from the database
      * @param food
      */
-    public static void removeFood (Food food) {
+    public static boolean removeFood (Food food) {
         try {
             PreparedStatement pstmt = conn.prepareStatement("DELETE FROM foods WHERE id = ?");
             pstmt.setInt(1, food.getId());
             pstmt.executeUpdate();
+            return true;
 
         } catch (SQLException e) {
             System.out.println(e);
+            return false;
         }
     }
 

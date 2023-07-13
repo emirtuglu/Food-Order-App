@@ -29,11 +29,11 @@ public class Restaurant {
         this.id = id;
     }
 
-    public Address getaddress() {
+    public Address getAddress() {
         return this.address;
     }
 
-    public void setaddress(Address address) {
+    public void setAddress(Address address) {
         this.address = address;
     }
 
@@ -84,7 +84,7 @@ public class Restaurant {
     public String toString() {
         return "{" +
             " id='" + getId() + "'" +
-            ", address='" + getaddress() + "'" +
+            ", address='" + getAddress() + "'" +
             ", name='" + getName() + "'" +
             ", phoneNumber='" + getPhoneNumber() + "'" +
             ", mail='" + getMail() + "'" +

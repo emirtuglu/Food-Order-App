@@ -5,7 +5,7 @@ import java.util.Objects;
 import java.util.HashMap;
 
 enum Status {
-    ACTIVE, COMPLETED, CANCEL_REQUESTED, CANCELLED
+    ACTIVE, COMPLETED, USER_REQUESTED_CANCEL, USER_CANCELLED, RESTAURANT_CANCELLED
 }
 
 public class Order {
