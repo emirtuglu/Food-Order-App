@@ -12,18 +12,21 @@ public class User {
     private String mail;
     private String password;
     private ArrayList<Address> addresses;
+    private ArrayList<Order> orders;
     private HashMap<Food, Integer> cart;  // Associate foods with their quantities
+
 
     public User() {
     }
 
-    public User(int id, String name, String surname, String phoneNumber, String mail, ArrayList<Address> addresses, HashMap<Food,Integer> cart) {
+    public User(int id, String name, String surname, String phoneNumber, String mail, ArrayList<Address> addresses, ArrayList<Order> orders, HashMap<Food,Integer> cart) {
         this.id = id;
         this.name = name;
         this.surname = surname;
         this.phoneNumber = phoneNumber;
         this.mail = mail;
         this.addresses = addresses;
+        this.orders = orders;
         this.cart = cart;
     }
 
@@ -79,8 +82,24 @@ public class User {
         return this.addresses;
     }
 
+    public void setAddresses(ArrayList<Address> addresses) {
+        this.addresses = addresses;
+    }
+
+    public ArrayList<Order> getOrders() {
+        return this.orders;
+    }
+
+    public void setOrders(ArrayList<Order> orders) {
+        this.orders = orders;
+    }
+
     public HashMap<Food,Integer> getCart() {
         return this.cart;
+    }
+
+    public void setCart(HashMap<Food,Integer> cart) {
+        this.cart = cart;
     }
 
     @Override
@@ -91,7 +110,7 @@ public class User {
             return false;
         }
         User user = (User) o;
-        return id == user.id && Objects.equals(name, user.name) && Objects.equals(surname, user.surname) && Objects.equals(phoneNumber, user.phoneNumber) && Objects.equals(mail, user.mail) && Objects.equals(addresses, user.addresses) && Objects.equals(cart, user.cart);
+        return id == user.id && Objects.equals(name, user.name) && Objects.equals(surname, user.surname) && Objects.equals(phoneNumber, user.phoneNumber) && Objects.equals(mail, user.mail) && Objects.equals(password, user.password) && Objects.equals(addresses, user.addresses) && Objects.equals(orders, user.orders) && Objects.equals(cart, user.cart);
     }
 
     @Override
@@ -102,8 +121,11 @@ public class User {
             ", surname='" + getSurname() + "'" +
             ", phoneNumber='" + getPhoneNumber() + "'" +
             ", mail='" + getMail() + "'" +
+            ", password='" + getPassword() + "'" +
             ", addresses='" + getAddresses() + "'" +
+            ", orders='" + getOrders() + "'" +
             ", cart='" + getCart() + "'" +
             "}";
     }
+    
 }

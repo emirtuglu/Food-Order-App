@@ -294,9 +294,11 @@ public class Database {
             ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
-                ArrayList<Address> addresses = getAddressesOfUser(rs.getInt("id"));
-                HashMap<Food, Integer> cart = getCartOfUser(rs.getInt("id"));
-                User user = new User(rs.getInt("id"), rs.getString("name"), rs.getString("surname"), rs.getString("phone_number"), mail, addresses, cart);
+                int id = rs.getInt("id");
+                ArrayList<Address> addresses = getAddressesOfUser(id);
+                ArrayList<Order> orders = getOrdersOfUser(id);
+                HashMap<Food, Integer> cart = getCartOfUser(id);
+                User user = new User(id, rs.getString("name"), rs.getString("surname"), rs.getString("phone_number"), mail, addresses, orders, cart);
                 return user;
             }
             return null;
@@ -320,8 +322,9 @@ public class Database {
 
             if (rs.next()) {
                 ArrayList<Address> addresses = getAddressesOfUser(id);
+                ArrayList<Order> orders = getOrdersOfUser(id);
                 HashMap<Food, Integer> cart = getCartOfUser(id);
-                User user = new User(id, rs.getString("name"), rs.getString("surname"), rs.getString("phone_number"), rs.getString("mail"), addresses, cart);
+                User user = new User(id, rs.getString("name"), rs.getString("surname"), rs.getString("phone_number"), rs.getString("mail"), addresses, orders, cart);
                 return user;
             }
             return null;
@@ -425,36 +428,59 @@ public class Database {
     }
 
     /**
+     * Retrieve the restaurant which has the specified mail from the database
+     * @param mail
+     * @return restaurant object
+     */
+    public static Restaurant getRestaurant (String mail) {
+        try {
+            PreparedStatement pstmt = conn.prepareStatement("SELECT id, address_id, name, phone_number FROM restaurants WHERE mail = ?");
+            pstmt.setString(1, mail);
+            ResultSet rs = pstmt.executeQuery();
+            
+            Address address = getAddress(rs.getInt("address_id"));
+            if (rs.next()) {
+                int id = rs.getInt("id");
+                ArrayList<Food> menu = getMenuOfRestaurant(id);
+                ArrayList<Order> orders = getOrdersOfRestaurant(id);
+                return new Restaurant(id, address, rs.getString("name"), rs.getString("phone_number"), mail, menu, orders);
+            }
+            return null;
+            
+        } catch (SQLException e) {
+            System.out.println(e);
+            return null;
+        }
+    }
+
+    /**
      * Returns the arraylist of restaurants in the same district with the given address
      * @param address
      * @return
      */
-    public static ArrayList<Restaurant> getRestaurantsInDistrict (Address address) {
+    public static ArrayList<Restaurant> getRestaurantsInDistrict (Address address) throws SQLException {
         ArrayList<Restaurant> restaurants = new ArrayList<Restaurant>();
-        try {
-            String query = "SELECT r.id, r.address_id, r.name, r.phone_number, r.mail " +
-            "FROM restaurants r " +
-            "JOIN addresses a ON r.address_id = a.id " +
-            "WHERE a.district = ?";
-            PreparedStatement pstmt = conn.prepareStatement(query);
-            pstmt.setString(1, address.getDistrict());
-            ResultSet rs = pstmt.executeQuery();
 
-            while (rs.next()) {
-                int id = rs.getInt("id");
-                Address restaurantAddress = getAddress(rs.getInt("address_id"));
-                String name = rs.getString("name");
-                String phoneNumber = rs.getString("phone_number");
-                String mail = rs.getString("mail");
-                ArrayList<Food> menu = getMenuOfRestaurant(id);
-                Restaurant restaurant = new Restaurant(id, restaurantAddress, name, phoneNumber, mail, menu, null);
-                restaurants.add(restaurant);
-            }
-            return restaurants;
-        } catch (SQLException e) {
-            System.out.println(e);
-            return restaurants;
+        String query = "SELECT r.id, r.address_id, r.name, r.phone_number, r.mail " +
+        "FROM restaurants r " +
+        "JOIN addresses a ON r.address_id = a.id " +
+        "WHERE a.district = ?";
+
+        PreparedStatement pstmt = conn.prepareStatement(query);
+        pstmt.setString(1, address.getDistrict());
+        ResultSet rs = pstmt.executeQuery();
+
+        while (rs.next()) {
+            int id = rs.getInt("id");
+            Address restaurantAddress = getAddress(rs.getInt("address_id"));
+            String name = rs.getString("name");
+            String phoneNumber = rs.getString("phone_number");
+            String mail = rs.getString("mail");
+            ArrayList<Food> menu = getMenuOfRestaurant(id);
+            Restaurant restaurant = new Restaurant(id, restaurantAddress, name, phoneNumber, mail, menu, null);
+            restaurants.add(restaurant);
         }
+        return restaurants;
     }
 
     /**
@@ -488,32 +514,28 @@ public class Database {
      * Returns the arraylist of orders of the specified restaurant
      * @param restaurant
      * @return
+     * @throws SQLException
      */
-    public static ArrayList<Order> getOrdersOfRestaurant (int restaurantId) {
+    public static ArrayList<Order> getOrdersOfRestaurant (int restaurantId) throws SQLException {
         ArrayList<Order> orders = new ArrayList<Order>();
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 
-        try {
-            PreparedStatement pstmt = conn.prepareStatement("SELECT id, user_id, time, price, status FROM orders WHERE restaurant_id = ?");
-            pstmt.setInt(1, restaurantId);
-            ResultSet rs = pstmt.executeQuery();
+        PreparedStatement pstmt = conn.prepareStatement("SELECT id, user_id, time, price, status FROM orders WHERE restaurant_id = ?");
+        pstmt.setInt(1, restaurantId);
+        ResultSet rs = pstmt.executeQuery();
 
-            while (rs.next()) {
-                int id = rs.getInt("id");
-                int userId = rs.getInt("user_id");
-                LocalDateTime time = LocalDateTime.parse(rs.getString("time"), dtf);
-                double price = rs.getDouble("price");
-                Status status = Status.valueOf(rs.getString("status"));
-                HashMap<Food, Integer> foods = getFoodsOfOrder(id);
+        while (rs.next()) {
+            int id = rs.getInt("id");
+            int userId = rs.getInt("user_id");
+            LocalDateTime time = LocalDateTime.parse(rs.getString("time"), dtf);
+            double price = rs.getDouble("price");
+            Status status = Status.valueOf(rs.getString("status"));
+            HashMap<Food, Integer> foods = getFoodsOfOrder(id);
 
-                Order order = new Order(id, restaurantId, userId, time, price, status, foods);
-                orders.add(order);
-            }
-            return orders;
-        } catch (SQLException e) {
-            System.out.println(e);
-            return orders;
+            Order order = new Order(id, restaurantId, userId, time, price, status, foods);
+            orders.add(order);
         }
+        return orders;
     }
 
 
@@ -522,18 +544,17 @@ public class Database {
      * @param restaurant
      * @return
      */
-    public static ArrayList<Order> getOrdersOfUser (User user) {
+    public static ArrayList<Order> getOrdersOfUser (int userId) {
         ArrayList<Order> orders = new ArrayList<Order>();
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 
         try {
             PreparedStatement pstmt = conn.prepareStatement("SELECT id, restaurant_id, time, price, status FROM orders WHERE user_id = ?");
-            pstmt.setInt(1, user.getId());
+            pstmt.setInt(1, userId);
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
                 int id = rs.getInt("id");
-                int userId = user.getId();
                 int restaurantId = rs.getInt("restaurant_id");
                 LocalDateTime time = LocalDateTime.parse(rs.getString("time"), dtf);
                 double price = rs.getDouble("price");
@@ -645,6 +666,27 @@ public class Database {
         } catch (SQLException e) {
             System.out.println(e);
             return null;
+        }
+    }
+
+    /**
+     * Updates foods in the cart of the user in database
+     * @param user
+     * @throws SQLException
+     */
+    public static void updateCart (User user) throws SQLException {
+        // Remove foods that belong to that user from database
+        PreparedStatement pstmt = conn.prepareStatement("DELETE FROM cart_foods WHERE user_id = ?");
+        pstmt.setInt(1, user.getId());
+        pstmt.executeUpdate();
+
+        // Add foods in the cart of the user to database
+        for (Food food : user.getCart().keySet()) {
+            PreparedStatement pstmt2 = conn.prepareStatement("INSERT INTO cart_foods (user_id, food_id, quantity) VALUES (?, ?, ?)");
+            pstmt2.setInt(1, user.getId());
+            pstmt2.setInt(2, food.getId());
+            pstmt2.setInt(3, user.getCart().get(food));
+            pstmt2.executeUpdate();
         }
     }
 
