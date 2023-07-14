@@ -121,57 +121,49 @@ public class Database {
 
     /**
      * Saves address object to database, sets the relation between the user and address in database
-     * @param user
      * @param address
+     * @param userId
      */
-    public static void saveUserAddress (User user, Address address) {
-        try {
-            // Insert into addresses table
-            PreparedStatement pstmt = conn.prepareStatement("INSERT INTO addresses (city, district, full_address) VALUES (?, ?, ?)");
-            pstmt.setString(1, address.getCity());
-            pstmt.setString(2, address.getDistrict());
-            pstmt.setString(3, address.getFullAddress());
-            pstmt.executeUpdate();
+    public static void saveUserAddress (Address address, int userId) throws SQLException {
+        // Insert into addresses table
+        PreparedStatement pstmt = conn.prepareStatement("INSERT INTO addresses (city, district, full_address) VALUES (?, ?, ?)");
+        pstmt.setString(1, address.getCity());
+        pstmt.setString(2, address.getDistrict());
+        pstmt.setString(3, address.getFullAddress());
+        pstmt.executeUpdate();
 
-            // Get id of the inserted address
-            PreparedStatement pstmt2 = conn.prepareStatement("SELECT id FROM addresses WHERE city = ? AND district = ? AND full_address = ? ORDER BY id DESC LIMIT 1");
-            pstmt2.setString(1, address.getCity());
-            pstmt2.setString(2, address.getDistrict());
-            pstmt2.setString(3, address.getFullAddress());
-            ResultSet rs = pstmt2.executeQuery();
-            int addressId = rs.getInt("id");
+        // Get id of the inserted address
+        PreparedStatement pstmt2 = conn.prepareStatement("SELECT id FROM addresses WHERE city = ? AND district = ? AND full_address = ? ORDER BY id DESC LIMIT 1");
+        pstmt2.setString(1, address.getCity());
+        pstmt2.setString(2, address.getDistrict());
+        pstmt2.setString(3, address.getFullAddress());
+        ResultSet rs = pstmt2.executeQuery();
+        int addressId = rs.getInt("id");
 
-            // Insert into user_addresses table which holds address-user relations
-            PreparedStatement pstmt3 = conn.prepareStatement("INSERT INTO user_addresses (user_id, address_id) VALUES (?, ?)");
-            pstmt3.setInt(1, user.getId());
-            pstmt3.setInt(2, addressId);
-            pstmt3.executeUpdate();
-
-        } catch (SQLException e) {
-            System.out.println(e);
-        }
+        // Insert into user_addresses table which holds address-user relations
+        PreparedStatement pstmt3 = conn.prepareStatement("INSERT INTO user_addresses (user_id, address_id) VALUES (?, ?)");
+        pstmt3.setInt(1, userId);
+        pstmt3.setInt(2, addressId);
+        pstmt3.executeUpdate();
     }
 
 
     /**
      * Deletes address and address-user relation from the database
-     * @param user
      * @param address
+     * @param userId
      */
-    public static void deleteUserAddress (User user, Address address) {
-        try {
-            // Delete user-address relation 
-            PreparedStatement pstmt = conn.prepareStatement(("DELETE FROM user_addresses WHERE address_id = ?"));
-            pstmt.setInt(1, address.getId());
-            pstmt.executeUpdate();
+    public static void deleteUserAddress (Address address, int userId) throws SQLException {
 
-            // Delete address itself
-            PreparedStatement pstmt2 = conn.prepareStatement("DELETE FROM addresses WHERE id = ?");
-            pstmt2.setInt(1, address.getId());
-            pstmt2.executeUpdate();
-        } catch (SQLException e) {
-            System.out.println(e);
-        }
+        // Delete user-address relation 
+        PreparedStatement pstmt = conn.prepareStatement(("DELETE FROM user_addresses WHERE address_id = ?"));
+        pstmt.setInt(1, address.getId());
+        pstmt.executeUpdate();
+
+        // Delete address itself
+        PreparedStatement pstmt2 = conn.prepareStatement("DELETE FROM addresses WHERE id = ?");
+        pstmt2.setInt(1, address.getId());
+        pstmt2.executeUpdate();
     }
 
     /**
@@ -602,32 +594,27 @@ public class Database {
      * Save the given order to database
      * @param order
      */
-    public static void saveOrder (Order order) {
+    public static void saveOrder (Order order) throws SQLException {
         // Get time
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
-        LocalDateTime now = LocalDateTime.now();  
+        LocalDateTime now = LocalDateTime.now();
 
-        try {
-            // Save order
-            PreparedStatement pstmt = conn.prepareStatement("INSERT INTO orders (restaurant_id, user_id, time, price, status) VALUES (?, ?, ?, ?, ?)");
-            pstmt.setInt(1, order.getRestaurantId());
-            pstmt.setInt(2, order.getUserId());
-            pstmt.setString(3, dtf.format(now));
-            pstmt.setDouble(4, order.getPrice());
-            pstmt.setString(5, order.getStatus().toString());
-            pstmt.executeUpdate();
+        // Save order
+        PreparedStatement pstmt = conn.prepareStatement("INSERT INTO orders (restaurant_id, user_id, time, price, status) VALUES (?, ?, ?, ?, ?)");
+        pstmt.setInt(1, order.getRestaurantId());
+        pstmt.setInt(2, order.getUserId());
+        pstmt.setString(3, dtf.format(now));
+        pstmt.setDouble(4, order.getPrice());
+        pstmt.setString(5, order.getStatus().toString());
+        pstmt.executeUpdate();
 
-            // Save ordered foods
-            for (Food food : order.getFoods().keySet()) {
-                PreparedStatement pstmt2 = conn.prepareStatement("INSERT INTO ordered_foods (order_id, food_id, quantity) VALUES (?, ?, ?)");
-                pstmt2.setInt(1, order.getId());
-                pstmt2.setInt(2, food.getId());
-                pstmt2.setInt(3, order.getFoods().get(food));
-                pstmt2.executeUpdate();
-            }
-
-        } catch (Exception e) {
-            System.out.println(e);
+        // Save ordered foods
+        for (Food food : order.getFoods().keySet()) {
+            PreparedStatement pstmt2 = conn.prepareStatement("INSERT INTO ordered_foods (order_id, food_id, quantity) VALUES (?, ?, ?)");
+            pstmt2.setInt(1, order.getId());
+            pstmt2.setInt(2, food.getId());
+            pstmt2.setInt(3, order.getFoods().get(food));
+            pstmt2.executeUpdate();
         }
     }
 
@@ -635,14 +622,10 @@ public class Database {
      * Updates the status of the given order in database
      * @param order
      */
-    public static void updateStatusOfOrder (Order order) {
-        try {
-            PreparedStatement pstmt = conn.prepareStatement("UPDATE orders SET status = ? WHERE id = ?");
-            pstmt.setString(1, order.getStatus().toString());
-            pstmt.setInt(2, order.getId());
-        } catch (SQLException e) {
-            System.out.println(e);
-        }
+    public static void updateStatusOfOrder (Order order) throws SQLException {
+        PreparedStatement pstmt = conn.prepareStatement("UPDATE orders SET status = ? WHERE id = ?");
+        pstmt.setString(1, order.getStatus().toString());
+        pstmt.setInt(2, order.getId());
     }
 
     /**
@@ -675,7 +658,7 @@ public class Database {
      * @throws SQLException
      */
     public static void updateCart (User user) throws SQLException {
-        // Remove foods that belong to that user from database
+        // delete foods that belong to that user from database
         PreparedStatement pstmt = conn.prepareStatement("DELETE FROM cart_foods WHERE user_id = ?");
         pstmt.setInt(1, user.getId());
         pstmt.executeUpdate();
@@ -708,11 +691,11 @@ public class Database {
     }
 
     /**
-     * Removes the specified food from specified user's cart
+     * deletes the specified food from specified user's cart
      * @param user
      * @param food
      */
-    public static void removeFoodFromCart (User user, Food food) {
+    public static void deleteFoodFromCart (User user, Food food) {
         try {
             PreparedStatement pstmt = conn.prepareStatement("DELETE FROM cart_foods WHERE user_id = ? AND food_id = ?");
             pstmt.setInt(1, user.getId());
@@ -762,10 +745,10 @@ public class Database {
     }
 
     /**
-     * Removes the specified food from the database
+     * deletes the specified food from the database
      * @param food
      */
-    public static boolean removeFood (Food food) {
+    public static boolean deleteFood (Food food) {
         try {
             PreparedStatement pstmt = conn.prepareStatement("DELETE FROM foods WHERE id = ?");
             pstmt.setInt(1, food.getId());
@@ -782,15 +765,11 @@ public class Database {
      * Updates whether the food is enabled or not
      * @param food
      */
-    public static void updateStatusOfFood (Food food) {
-        try {
-            PreparedStatement pstmt = conn.prepareStatement("UPDATE foods SET enabled = ? WHERE id = ?");
-            pstmt.setBoolean(1, food.isEnabled());
-            pstmt.setInt(2, food.getId());
-            pstmt.executeUpdate();
-        } catch (SQLException e) {
-            System.out.println(e);
-        }
+    public static void updateStatusOfFood (Food food) throws SQLException {
+        PreparedStatement pstmt = conn.prepareStatement("UPDATE foods SET enabled = ? WHERE id = ?");
+        pstmt.setBoolean(1, food.isEnabled());
+        pstmt.setInt(2, food.getId());
+        pstmt.executeUpdate();
     }
 
 }
