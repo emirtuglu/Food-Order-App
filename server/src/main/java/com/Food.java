@@ -3,17 +3,18 @@ import java.util.Objects;
 
 public class Food {
     private int id;
-    private Restaurant restaurant;
+    private int restaurantId;
     private String name;
     private double price;
     private boolean enabled;
 
+
     public Food() {
     }
 
-    public Food(int id, Restaurant restaurant, String name, double price, boolean enabled) {
+    public Food(int id, int restaurantId, String name, double price, boolean enabled) {
         this.id = id;
-        this.restaurant = restaurant;
+        this.restaurantId = restaurantId;
         this.name = name;
         this.price = price;
         this.enabled = enabled;
@@ -27,12 +28,12 @@ public class Food {
         this.id = id;
     }
 
-    public Restaurant getRestaurant() {
-        return this.restaurant;
+    public int getRestaurantId() {
+        return this.restaurantId;
     }
 
-    public void setRestaurant(Restaurant restaurant) {
-        this.restaurant = restaurant;
+    public void setRestaurantId(int restaurantId) {
+        this.restaurantId = restaurantId;
     }
 
     public String getName() {
@@ -67,18 +68,18 @@ public class Food {
             return false;
         }
         Food food = (Food) o;
-        return id == food.id && Objects.equals(restaurant, food.restaurant) && Objects.equals(name, food.name) && Objects.equals(price, food.price) && enabled == food.enabled;
+        return id == food.id && restaurantId == food.restaurantId && Objects.equals(name, food.name) && price == food.price && enabled == food.enabled;
     }
 
     @Override
     public String toString() {
         return "{" +
             " id='" + getId() + "'" +
-            ", restaurant='" + getRestaurant() + "'" +
+            ", restaurantId='" + getRestaurantId() + "'" +
             ", name='" + getName() + "'" +
             ", price='" + getPrice() + "'" +
             ", enabled='" + isEnabled() + "'" +
             "}";
-    }
+    }    
 }
 

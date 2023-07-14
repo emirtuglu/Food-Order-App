@@ -75,8 +75,8 @@ public class Server {
         Gson gson = new Gson();
         //ArrayList<User> users = gson.fromJson(json, new TypeToken<List<User>>(){}.getType());
 
-
-        if (method.equals("POST") && path.equals("/registerUser")) {
+        // user-register endpoint
+        if (method.equals("POST") && path.equals("/user-register")) {
             User user = gson.fromJson(body, User.class);
             
             // Perform checks
@@ -104,7 +104,8 @@ public class Server {
             }
         }
 
-        if (method.equals("POST") && path.equals("registerRestaurant")) {
+        // restaurant-register endpoint
+        if (method.equals("POST") && path.equals("/restaurant-register")) {
             Restaurant restaurant = gson.fromJson(body, Restaurant.class);
 
             // Perform checks
@@ -136,7 +137,34 @@ public class Server {
             }
         }
 
-        if (method.equals("POST") && path.equals("addFood")) {
+        // user-login endpoint
+        if (method.equals("POST") && path.equals("/user-login")) {
+
+        }
+
+        // restaurant-login endpoint
+        if (method.equals("POST") && path.equals("/restaurant-login")) {
+
+        }
+
+        // restaurants endpoint, returns the list of restaurants in the same district with the user
+        if (method.equals("GET") && path.equals("/restaurants")) {
+
+        }
+
+        // user-orders endpoint, returns orders of the user
+        if (method.equals("GET") && path.equals("/user-orders")) {
+
+        }
+
+        // restaurant-orders endpoint, return orders of the restaurant
+        if (method.equals("GET") && path.equals("/restaurant-orders")) {
+
+        }
+
+
+        // add-food endpoint
+        if (method.equals("POST") && path.equals("/add-food")) {
             Food food = gson.fromJson(body, Food.class);
 
             // Perform checks
@@ -146,11 +174,8 @@ public class Server {
             if (!isValidPrice(food.getPrice())) {
                 return "HTTP/1.1 401 Unauthorized\r\n\r\nInvalid food price";
             }
-            if (food.getRestaurant() == null) {
-                return "HTTP/1.1 401 Unauthorized\r\n\r\nFood couldn't be added";
-            }
 
-            if (Database.saveFood(food.getRestaurant(), food)) {
+            if (Database.saveFood(food)) {
                 return "HTTP/1.1 201 Created\r\n\r\nFood successfully added";
             } 
             else {
@@ -158,13 +183,9 @@ public class Server {
             }
         }
 
-        if (method.equals("POST") && path.equals("removeFood")) {
+        // remove-food endpoint
+        if (method.equals("POST") && path.equals("/remove-food")) {
             Food food = gson.fromJson(body, Food.class);
-
-            // Perform checks
-            if (food.getRestaurant() == null) {
-                return "HTTP/1.1 401 Unauthorized\r\n\r\nFood couldn't be removed";
-            }
             
             if (Database.removeFood(food)) {
                 return "HTTP/1.1 200 OK\r\n\r\nFood successfully removed";
@@ -213,5 +234,5 @@ public class Server {
             district != null && district.length() > 1 && district.length() < 30 &&
             fullAddress != null && fullAddress.length() > 9 && fullAddress.length() < 256;
     }
-
+    
 }

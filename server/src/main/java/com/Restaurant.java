@@ -1,4 +1,5 @@
 package com;
+import java.util.ArrayList;
 import java.util.Objects;
 
 
@@ -9,16 +10,20 @@ public class Restaurant {
     private String phoneNumber;
     private String mail;
     private String password;
+    private ArrayList<Food> menu;
+    private ArrayList<Order> orders;
 
     public Restaurant() {
     }
 
-    public Restaurant(int id, Address address, String name, String phoneNumber, String mail) {
+    public Restaurant(int id, Address address, String name, String phoneNumber, String mail, ArrayList<Food> menu, ArrayList<Order> orders) {
         this.id = id;
         this.address = address;
         this.name = name;
         this.phoneNumber = phoneNumber;
         this.mail = mail;
+        this.menu = menu;
+        this.orders = orders;
     }
 
     public int getId() {
@@ -69,6 +74,22 @@ public class Restaurant {
         this.password = password;
     }
 
+    public ArrayList<Food> getMenu() {
+        return this.menu;
+    }
+
+    public void setMenu(ArrayList<Food> menu) {
+        this.menu = menu;
+    }
+
+    public ArrayList<Order> getOrders() {
+        return this.orders;
+    }
+
+    public void setOrders(ArrayList<Order> orders) {
+        this.orders = orders;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == this)
@@ -77,7 +98,7 @@ public class Restaurant {
             return false;
         }
         Restaurant restaurant = (Restaurant) o;
-        return id == restaurant.id && address == restaurant.address && Objects.equals(name, restaurant.name) && Objects.equals(phoneNumber, restaurant.phoneNumber) && Objects.equals(mail, restaurant.mail);
+        return id == restaurant.id && Objects.equals(address, restaurant.address) && Objects.equals(name, restaurant.name) && Objects.equals(phoneNumber, restaurant.phoneNumber) && Objects.equals(mail, restaurant.mail) && Objects.equals(password, restaurant.password) && Objects.equals(menu, restaurant.menu) && Objects.equals(orders, restaurant.orders);
     }
 
     @Override
@@ -88,6 +109,9 @@ public class Restaurant {
             ", name='" + getName() + "'" +
             ", phoneNumber='" + getPhoneNumber() + "'" +
             ", mail='" + getMail() + "'" +
+            ", password='" + getPassword() + "'" +
+            ", menu='" + getMenu() + "'" +
+            ", orders='" + getOrders() + "'" +
             "}";
     }
 }

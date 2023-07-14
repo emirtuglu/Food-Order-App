@@ -10,8 +10,8 @@ enum Status {
 
 public class Order {
     private int id;
-    private Restaurant restaurant;
-    private User user;
+    private int restaurantId;
+    private int userId;
     private LocalDateTime time;
     private double price;
     private Status status;
@@ -20,13 +20,14 @@ public class Order {
     public Order() {
     }
 
-    public Order(int id, Restaurant restaurant, User user, LocalDateTime time, double price, Status status) {
+    public Order(int id, int restaurantId, int userId, LocalDateTime time, double price, Status status, HashMap<Food,Integer> foods) {
         this.id = id;
-        this.restaurant = restaurant;
-        this.user = user;
+        this.restaurantId = restaurantId;
+        this.userId = userId;
         this.time = time;
         this.price = price;
         this.status = status;
+        this.foods = foods;
     }
 
     public int getId() {
@@ -37,20 +38,20 @@ public class Order {
         this.id = id;
     }
 
-    public Restaurant getRestaurant() {
-        return this.restaurant;
+    public int getRestaurantId() {
+        return this.restaurantId;
     }
 
-    public void setRestaurant(Restaurant restaurant) {
-        this.restaurant = restaurant;
+    public void setRestaurantId(int restaurantId) {
+        this.restaurantId = restaurantId;
     }
 
-    public User getUser() {
-        return this.user;
+    public int getUserId() {
+        return this.userId;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setUserId(int userId) {
+        this.userId = userId;
     }
 
     public LocalDateTime getTime() {
@@ -77,8 +78,12 @@ public class Order {
         this.status = status;
     }
 
-    public HashMap<Food, Integer> getFoods() {
+    public HashMap<Food,Integer> getFoods() {
         return this.foods;
+    }
+
+    public void setFoods(HashMap<Food,Integer> foods) {
+        this.foods = foods;
     }
 
     @Override
@@ -89,18 +94,19 @@ public class Order {
             return false;
         }
         Order order = (Order) o;
-        return id == order.id && Objects.equals(restaurant, order.restaurant) && Objects.equals(user, order.user) && Objects.equals(time, order.time) && price == order.price && Objects.equals(status, order.status);
+        return id == order.id && restaurantId == order.restaurantId && userId == order.userId && Objects.equals(time, order.time) && price == order.price && Objects.equals(status, order.status) && Objects.equals(foods, order.foods);
     }
 
     @Override
     public String toString() {
         return "{" +
             " id='" + getId() + "'" +
-            ", restaurant='" + getRestaurant() + "'" +
-            ", user='" + getUser() + "'" +
+            ", restaurantId='" + getRestaurantId() + "'" +
+            ", userId='" + getUserId() + "'" +
             ", time='" + getTime() + "'" +
             ", price='" + getPrice() + "'" +
             ", status='" + getStatus() + "'" +
+            ", foods='" + getFoods() + "'" +
             "}";
     }
 }

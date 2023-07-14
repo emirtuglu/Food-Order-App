@@ -387,11 +387,9 @@ public class Database {
             PreparedStatement pstmt = conn.prepareStatement("SELECT restaurant_id, name, price, enabled FROM foods WHERE id = ?");
             pstmt.setInt(1, id);
             ResultSet rs = pstmt.executeQuery();
-            Restaurant restaurant = getRestaurant(rs.getInt("restaurant_id"));
             
             if (rs.next()) {
-                return new Food(id, restaurant, rs.getString("name"), rs.getDouble("price"), rs.getBoolean("enabled"));
-
+                return new Food(id, rs.getInt("restaurant_id"), rs.getString("name"), rs.getDouble("price"), rs.getBoolean("enabled"));
             }
             return null;
             
@@ -414,8 +412,9 @@ public class Database {
             
             Address address = getAddress(rs.getInt("address_id"));
             if (rs.next()) {
-                return new Restaurant(id, address, rs.getString("name"), rs.getString("phone_number"), rs.getString("mail"));
-
+                ArrayList<Food> menu = getMenuOfRestaurant(id);
+                ArrayList<Order> orders = getOrdersOfRestaurant(id);
+                return new Restaurant(id, address, rs.getString("name"), rs.getString("phone_number"), rs.getString("mail"), menu, orders);
             }
             return null;
             
@@ -447,7 +446,8 @@ public class Database {
                 String name = rs.getString("name");
                 String phoneNumber = rs.getString("phone_number");
                 String mail = rs.getString("mail");
-                Restaurant restaurant = new Restaurant(id, restaurantAddress, name, phoneNumber, mail);
+                ArrayList<Food> menu = getMenuOfRestaurant(id);
+                Restaurant restaurant = new Restaurant(id, restaurantAddress, name, phoneNumber, mail, menu, null);
                 restaurants.add(restaurant);
             }
             return restaurants;
@@ -459,14 +459,14 @@ public class Database {
 
     /**
      * Returns the arraylist of foods in the given restaurant
-     * @param restaurant
+     * @param restaurantId
      * @return
      */
-    public static ArrayList<Food> getFoodsInRestaurant (Restaurant restaurant) {
+    public static ArrayList<Food> getMenuOfRestaurant (int restaurantId) {
         ArrayList<Food> foods = new ArrayList<Food>();
         try {
             PreparedStatement pstmt = conn.prepareStatement("SELECT id, name, price, enabled FROM foods WHERE restaurant_id = ?");
-            pstmt.setInt(1, restaurant.getId());
+            pstmt.setInt(1, restaurantId);
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
@@ -474,7 +474,7 @@ public class Database {
                 String name = rs.getString("name");
                 double price = rs.getDouble("price");
                 boolean enabled = rs.getBoolean("enabled");
-                Food food = new Food(id, restaurant, name, price, enabled);
+                Food food = new Food(id, restaurantId, name, price, enabled);
                 foods.add(food);
             }
             return foods;
@@ -489,23 +489,24 @@ public class Database {
      * @param restaurant
      * @return
      */
-    public static ArrayList<Order> getOrdersOfRestaurant (Restaurant restaurant) {
+    public static ArrayList<Order> getOrdersOfRestaurant (int restaurantId) {
         ArrayList<Order> orders = new ArrayList<Order>();
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 
         try {
             PreparedStatement pstmt = conn.prepareStatement("SELECT id, user_id, time, price, status FROM orders WHERE restaurant_id = ?");
-            pstmt.setInt(1, restaurant.getId());
+            pstmt.setInt(1, restaurantId);
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
                 int id = rs.getInt("id");
-                User user = getUser(rs.getInt("user_id"));
+                int userId = rs.getInt("user_id");
                 LocalDateTime time = LocalDateTime.parse(rs.getString("time"), dtf);
                 double price = rs.getDouble("price");
                 Status status = Status.valueOf(rs.getString("status"));
+                HashMap<Food, Integer> foods = getFoodsOfOrder(id);
 
-                Order order = new Order(id, restaurant, user, time, price, status);
+                Order order = new Order(id, restaurantId, userId, time, price, status, foods);
                 orders.add(order);
             }
             return orders;
@@ -532,12 +533,14 @@ public class Database {
 
             while (rs.next()) {
                 int id = rs.getInt("id");
-                Restaurant restaurant = getRestaurant(rs.getInt("restaurant_id"));
+                int userId = user.getId();
+                int restaurantId = rs.getInt("restaurant_id");
                 LocalDateTime time = LocalDateTime.parse(rs.getString("time"), dtf);
                 double price = rs.getDouble("price");
                 Status status = Status.valueOf(rs.getString("status"));
+                HashMap<Food, Integer> foods = getFoodsOfOrder(id);
 
-                Order order = new Order(id, restaurant, user, time, price, status);
+                Order order = new Order(id, restaurantId, userId, time, price, status, foods);
                 orders.add(order);
             }
             return orders;
@@ -547,8 +550,33 @@ public class Database {
         }
     }
 
-    
+    /**
+     * Returns foods and their quantities of the specified order
+     * @param orderId
+     * @return
+     */
+    public static HashMap<Food, Integer> getFoodsOfOrder (int orderId) {
+        HashMap<Food, Integer> foods = new HashMap<Food, Integer>();
 
+        try {
+            PreparedStatement pstmt = conn.prepareStatement("SELECT food_id, quantity FROM ordered_foods WHERE order_id = ?");
+            pstmt.setInt(1, orderId);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                int foodId = rs.getInt("food_id");
+                int quantity = rs.getInt("quantity");
+                Food food = getFood(foodId);
+                foods.put(food, quantity);
+            }
+            return foods;
+        } catch (SQLException e) {
+            System.out.println(e);
+            return foods;
+        }
+    }
+
+    
     /**
      * Save the given order to database
      * @param order
@@ -561,8 +589,8 @@ public class Database {
         try {
             // Save order
             PreparedStatement pstmt = conn.prepareStatement("INSERT INTO orders (restaurant_id, user_id, time, price, status) VALUES (?, ?, ?, ?, ?)");
-            pstmt.setInt(1, order.getRestaurant().getId());
-            pstmt.setInt(2, order.getUser().getId());
+            pstmt.setInt(1, order.getRestaurantId());
+            pstmt.setInt(2, order.getUserId());
             pstmt.setString(3, dtf.format(now));
             pstmt.setDouble(4, order.getPrice());
             pstmt.setString(5, order.getStatus().toString());
@@ -676,10 +704,10 @@ public class Database {
      * @param restaurant
      * @param food
      */
-    public static boolean saveFood (Restaurant restaurant, Food food) {
+    public static boolean saveFood (Food food) {
         try {
             PreparedStatement pstmt = conn.prepareStatement("INSERT INTO foods (restaurant_id, name, price, enabled) VALUES (?, ?, ?, ?)");
-            pstmt.setInt(1, restaurant.getId());
+            pstmt.setInt(1, food.getRestaurantId());
             pstmt.setString(2, food.getName());
             pstmt.setDouble(3, food.getPrice());
             pstmt.setBoolean(4, food.isEnabled());
@@ -722,7 +750,6 @@ public class Database {
             System.out.println(e);
         }
     }
-
 
 }
 
