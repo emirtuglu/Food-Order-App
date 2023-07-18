@@ -74,9 +74,9 @@ public class Server {
         String body = "";
 
         // Extract parameters from path if any
-        if (path.split("?").length > 0) {
-            path = path.split("?")[0];
-            parameters = path.split("?")[1];
+        if (path.contains("?")) {
+            parameters = path.split("\\?")[1];
+            path = path.split("\\?")[0];
 
             // If parameters isn't valid, return
             if (!isValidParameter(parameters)) {
@@ -240,7 +240,7 @@ public class Server {
         if (method.equals("GET") && path.equals("/user-orders")) {
 
             // Check parameters
-            if (parameters.split("=")[0] != "userId") {
+            if (!parameters.split("=")[0].equals("userId")) {
                 return "HTTP/1.1 401 Unauthorized\r\n\r\nInvalid parameters";
             }
             int userId = Integer.parseInt(parameters.split("=")[1]);
@@ -255,7 +255,7 @@ public class Server {
                 +"\r\n"
                 + json;
                 return response;
-            } catch (Exception e) {
+            } catch (SQLException e) {
                 return "HTTP/1.1 401 Unauthorized\r\n\r\nCouldn't get orders";
             }
         }
@@ -264,7 +264,7 @@ public class Server {
         if (method.equals("GET") && path.equals("/restaurant-orders")) {
 
             // Check parameters
-            if (parameters.split("=")[0] != "restaurantId") {
+            if (!parameters.split("=")[0].equals("restaurantId")) {
                 return "HTTP/1.1 401 Unauthorized\r\n\r\nInvalid parameters";
             }
             int restaurantId = Integer.parseInt(parameters.split("=")[1]);
@@ -336,7 +336,7 @@ public class Server {
             Address address = gson.fromJson(body, Address.class);
 
             // Check parameters
-            if (parameters.split("=")[0] != "userId") {
+            if (parameters.split("=")[0].equals("userId")) {
                 return "HTTP/1.1 401 Unauthorized\r\n\r\nInvalid parameters";
             }
             int userId = Integer.parseInt(parameters.split("=")[1]);
@@ -358,7 +358,7 @@ public class Server {
             Address address = gson.fromJson(body, Address.class);
 
             // Check parameters
-            if (parameters.split("=")[0] != "userId") {
+            if (parameters.split("=")[0].equals("userId")) {
                 return "HTTP/1.1 401 Unauthorized\r\n\r\nInvalid parameters";
             }
             int userId = Integer.parseInt(parameters.split("=")[1]);

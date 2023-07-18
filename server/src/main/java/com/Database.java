@@ -126,10 +126,11 @@ public class Database {
      */
     public static void saveUserAddress (Address address, int userId) throws SQLException {
         // Insert into addresses table
-        PreparedStatement pstmt = conn.prepareStatement("INSERT INTO addresses (city, district, full_address) VALUES (?, ?, ?)");
-        pstmt.setString(1, address.getCity());
-        pstmt.setString(2, address.getDistrict());
-        pstmt.setString(3, address.getFullAddress());
+        PreparedStatement pstmt = conn.prepareStatement("INSERT INTO addresses (title, city, district, full_address) VALUES (?, ?, ?, ?)");
+        pstmt.setString(1, address.getTitle());
+        pstmt.setString(2, address.getCity());
+        pstmt.setString(3, address.getDistrict());
+        pstmt.setString(4, address.getFullAddress());
         pstmt.executeUpdate();
 
         // Get id of the inserted address
@@ -357,12 +358,12 @@ public class Database {
      */
     public static Address getAddress (int id) {
         try {
-            PreparedStatement pstmt = conn.prepareStatement("SELECT city, district, full address FROM addresses WHERE id = ?");
+            PreparedStatement pstmt = conn.prepareStatement("SELECT title, city, district, full address FROM addresses WHERE id = ?");
             pstmt.setInt(1, id);
             ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
-                return new Address(id, rs.getString("city"), rs.getString("district"), rs.getString("full_address"));
+                return new Address(id, rs.getString("title"), rs.getString("city"), rs.getString("district"), rs.getString("full_address"));
             }
             return null;
             
@@ -510,7 +511,6 @@ public class Database {
      */
     public static ArrayList<Order> getOrdersOfRestaurant (int restaurantId) throws SQLException {
         ArrayList<Order> orders = new ArrayList<Order>();
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 
         PreparedStatement pstmt = conn.prepareStatement("SELECT id, user_id, time, price, status FROM orders WHERE restaurant_id = ?");
         pstmt.setInt(1, restaurantId);
@@ -519,7 +519,7 @@ public class Database {
         while (rs.next()) {
             int id = rs.getInt("id");
             int userId = rs.getInt("user_id");
-            LocalDateTime time = LocalDateTime.parse(rs.getString("time"), dtf);
+            String time = rs.getString("time");
             double price = rs.getDouble("price");
             Status status = Status.valueOf(rs.getString("status"));
             HashMap<Food, Integer> foods = getFoodsOfOrder(id);
@@ -536,31 +536,25 @@ public class Database {
      * @param restaurant
      * @return
      */
-    public static ArrayList<Order> getOrdersOfUser (int userId) {
+    public static ArrayList<Order> getOrdersOfUser (int userId) throws SQLException {
         ArrayList<Order> orders = new ArrayList<Order>();
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 
-        try {
-            PreparedStatement pstmt = conn.prepareStatement("SELECT id, restaurant_id, time, price, status FROM orders WHERE user_id = ?");
-            pstmt.setInt(1, userId);
-            ResultSet rs = pstmt.executeQuery();
+        PreparedStatement pstmt = conn.prepareStatement("SELECT id, restaurant_id, time, price, status FROM orders WHERE user_id = ?");
+        pstmt.setInt(1, userId);
+        ResultSet rs = pstmt.executeQuery();
 
-            while (rs.next()) {
-                int id = rs.getInt("id");
-                int restaurantId = rs.getInt("restaurant_id");
-                LocalDateTime time = LocalDateTime.parse(rs.getString("time"), dtf);
-                double price = rs.getDouble("price");
-                Status status = Status.valueOf(rs.getString("status"));
-                HashMap<Food, Integer> foods = getFoodsOfOrder(id);
+        while (rs.next()) {
+            int id = rs.getInt("id");
+            int restaurantId = rs.getInt("restaurant_id");
+            String time = rs.getString("time");
+            double price = rs.getDouble("price");
+            Status status = Status.valueOf(rs.getString("status"));
+            HashMap<Food, Integer> foods = getFoodsOfOrder(id);
 
-                Order order = new Order(id, restaurantId, userId, time, price, status, foods);
-                orders.add(order);
-            }
-            return orders;
-        } catch (SQLException e) {
-            System.out.println(e);
-            return orders;
+            Order order = new Order(id, restaurantId, userId, time, price, status, foods);
+            orders.add(order);
         }
+        return orders;
     }
 
     /**

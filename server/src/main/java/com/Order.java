@@ -1,6 +1,5 @@
 package com;
 
-import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.HashMap;
 
@@ -12,7 +11,7 @@ public class Order {
     private int id;
     private int restaurantId;
     private int userId;
-    private LocalDateTime time;
+    private String time;
     private double price;
     private Status status;
     private HashMap<Food, Integer> foods;
@@ -20,7 +19,7 @@ public class Order {
     public Order() {
     }
 
-    public Order(int id, int restaurantId, int userId, LocalDateTime time, double price, Status status, HashMap<Food,Integer> foods) {
+    public Order(int id, int restaurantId, int userId, String time, double price, Status status, HashMap<Food,Integer> foods) {
         this.id = id;
         this.restaurantId = restaurantId;
         this.userId = userId;
@@ -54,11 +53,11 @@ public class Order {
         this.userId = userId;
     }
 
-    public LocalDateTime getTime() {
+    public String getTime() {
         return this.time;
     }
 
-    public void setTime(LocalDateTime time) {
+    public void setTime(String time) {
         this.time = time;
     }
 

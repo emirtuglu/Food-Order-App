@@ -3,6 +3,7 @@ import java.util.Objects;
 
 public class Address {
     private int id;
+    private String title;
     private String city;
     private String district;
     private String fullAddress;
@@ -17,12 +18,28 @@ public class Address {
         this.fullAddress = fullAddress;
     }
 
+    public Address(int id, String title, String city, String district, String fullAddress) {
+        this.id = id;
+        this.title = title;
+        this.city = city;
+        this.district = district;
+        this.fullAddress = fullAddress;
+    }
+
     public int getId() {
         return this.id;
     }
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public String getTitle() {
+        return this.title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public String getCity() {
