@@ -7,47 +7,71 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.content.Intent;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 import java.util.ArrayList;
+import java.util.List;
 
 public class RestaurantSelectActivity extends AppCompatActivity {
 
-    private RecyclerView recyclerViewOrders;
-    private RecyclerView recyclerViewRestaurants;
     private ArrayList<Restaurant> restaurantsList;
     private ArrayList<Order> ordersList;
-    private TextView seeAllOrdersText;
-    private OrderAdapter ordersAdapter;
-    private RestaurantAdapter restaurantsAdapter;
+    private User user;
+    private Address address;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_restaurant_select);
 
-        recyclerViewOrders = findViewById(R.id.recyclerViewOrders);
-        recyclerViewRestaurants = findViewById(R.id.recyclerViewRestaurants);
-        seeAllOrdersText = findViewById(R.id.seeAllOrdersText);
-        restaurantsList = new ArrayList<Restaurant>();
-        ordersList = new ArrayList<Order>();
-        restaurantsList.add(new Restaurant(1, new Address(1, "t", "city", "dist", "full"), "Restaurant A", "+535 654 43 54", null, null, null));
-        restaurantsList.add(new Restaurant(1, new Address(1, "t", "city", "dist", "full"), "Restaurant B", "+535 654 43 54", null, null, null));
-        restaurantsList.add(new Restaurant(1, new Address(1, "t", "city", "dist", "full"), "Restaurant B", "+535 654 43 54", null, null, null));
-        restaurantsList.add(new Restaurant(1, new Address(1, "t", "city", "dist", "full"), "Restaurant B", "+535 654 43 54", null, null, null));
-        restaurantsList.add(new Restaurant(1, new Address(1, "t", "city", "dist", "full"), "Restaurant B", "+535 654 43 54", null, null, null));
+        RequestManager requestManager = new RequestManager();
+        Gson gson = new Gson();
+        String addressJson = getIntent().getStringExtra("address");
+        String userJson = getIntent().getStringExtra("user");
 
-        ordersList.add(new Order(1, 1, 1, "Restaurant A", "18.07.2023 / 15:20", 155.55, Status.ACTIVE, null));
+        address = gson.fromJson(addressJson, Address.class);
+        user = gson.fromJson(userJson, User.class);
+
+        String request = RequestManager.requestBuild("GET", "/restaurants", "addressId", String.valueOf(address.getId()), addressJson);
+        String response = null;
+        try {
+            response = requestManager.execute(request).get();
+        } catch (Exception e) {
+            Log.i("error", e.toString());
+        }
+
+        String restaurantsJson = RequestManager.getBody(response);
+        restaurantsList = gson.fromJson(restaurantsJson, new TypeToken<List<Restaurant>>(){}.getType());
+        ordersList = new ArrayList<Order>();
+        if (user.getLastOrder() != null) {
+            ordersList.add(user.getLastOrder());
+        }
+
+        if (ordersList.size() == 0) {
+            TextView lastOrderText = findViewById(R.id.lastOrderText);
+            TextView seeAll = findViewById(R.id.seeAllOrdersText);
+
+            lastOrderText.setText("You don't have any order yet");
+            seeAll.setVisibility(View.INVISIBLE);
+        }
+
+        RecyclerView recyclerViewOrders = findViewById(R.id.recyclerViewOrders);
+        RecyclerView recyclerViewRestaurants = findViewById(R.id.recyclerViewRestaurants);
 
         recyclerViewOrders.setLayoutManager(new LinearLayoutManager(this));
         recyclerViewRestaurants.setLayoutManager(new LinearLayoutManager(this));
 
-        ordersAdapter = new OrderAdapter(ordersList, this);
-        restaurantsAdapter = new RestaurantAdapter(restaurantsList, this);
+        OrderAdapter ordersAdapter = new OrderAdapter(ordersList, this);
+        RestaurantAdapter restaurantsAdapter = new RestaurantAdapter(restaurantsList, this);
 
         recyclerViewOrders.setAdapter(ordersAdapter);
         recyclerViewRestaurants.setAdapter(restaurantsAdapter);
@@ -55,11 +79,21 @@ public class RestaurantSelectActivity extends AppCompatActivity {
         ordersAdapter.notifyDataSetChanged(); // Notify when dataset changed
         restaurantsAdapter.notifyDataSetChanged();
 
+        TextView seeAllOrdersText = findViewById(R.id.seeAllOrdersText);
         seeAllOrdersText.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent ordersActivityIntent = new Intent (view.getContext(), OrdersActivity.class);
                 startActivity(ordersActivityIntent);
+            }
+        });
+
+        ImageView cartImage = findViewById(R.id.cartImage);
+        cartImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent cartActivityIntent = new Intent (view.getContext(), CartActivity.class);
+                startActivity(cartActivityIntent);
             }
         });
     }
@@ -92,8 +126,8 @@ public class RestaurantSelectActivity extends AppCompatActivity {
 
             @Override
             public void onClick(View view) {
-                int position = getAdapterPosition();
-
+                Intent orderDisplayIntent = new Intent (view.getContext(), OrderDisplayActivity.class);
+                startActivity(orderDisplayIntent);
             }
 
             public void bind(Order order) {

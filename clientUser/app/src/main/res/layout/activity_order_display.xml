@@ -1,4 +1,4 @@
-<!-- activity_restaurant_menu.xml -->
+<!-- activity_display_order.xml -->
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -6,35 +6,43 @@
     android:orientation="vertical"
     android:gravity="top">
 
-    <ImageView
-        android:id="@+id/cartImage"
-        android:layout_width="42dp"
-        android:layout_height="42dp"
-        android:src="@drawable/cart_icon"
-        android:layout_marginEnd="12dp"
-        android:layout_gravity="right"
-        android:clickable="true"/>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Order Details"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:layout_margin="24dp"
+        android:textColor="#000000" />
+
+    <TextView
+        android:id="@+id/date"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Date"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="12dp"
+        android:layout_marginRight="48dp"
+        android:gravity="right"
+        android:textColor="#000000" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingRight="16dp"
-        android:paddingLeft="16dp"
-        android:paddingBottom="16dp"
-        android:paddingTop="4dp">
+        android:padding="10dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="16dp"
-            android:gravity="center">
+            android:gravity="left">
 
             <ImageView
                 android:id="@+id/restaurantImage"
-                android:layout_width="96dp"
-                android:layout_height="96dp"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
                 android:scaleType="centerCrop"
                 android:src="@drawable/default_restaurant_logo" />
 
@@ -49,7 +57,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Restaurant Name"
-                    android:textSize="28sp"
+                    android:textSize="24sp"
                     android:textStyle="bold"
                     android:textColor="#000000" />
 
@@ -68,28 +76,22 @@
 
     </LinearLayout>
 
-
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="3dp"
-        android:layout_marginTop="5dp"
-        android:background="@color/black" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Menu"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:layout_marginTop="8dp"
-        android:padding="16dp" />
-
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerViewMenu"
+        android:id="@+id/recyclerViewFoods"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingTop="8dp"
         android:paddingBottom="8dp" />
+
+    <TextView
+        android:id="@+id/totalPrice"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="right"
+        android:text="Total Price:"
+        android:paddingRight="48dp"
+        android:paddingTop="8dp"
+        android:textSize="16dp"/>
+
 
 </LinearLayout>

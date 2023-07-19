@@ -1,6 +1,7 @@
 package com.example.foodapp;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Objects;
 
@@ -28,6 +29,30 @@ public class User {
         this.addresses = addresses;
         this.orders = orders;
         this.cart = cart;
+    }
+
+    public User(String name, String surname, String phoneNumber, String mail, String password) {
+        this.name = name;
+        this.surname = surname;
+        this.phoneNumber = phoneNumber;
+        this.mail = mail;
+        this.password = password;
+    }
+
+    public User(String mail, String password) {
+        this.mail = mail;
+        this.password = password;
+    }
+
+    public Order getLastOrder() {
+        if (orders == null || orders.isEmpty()) {
+            return null;
+        }
+
+        // Sort orders based on time in descending order
+        orders.sort(Comparator.comparing(Order::getTime, Comparator.reverseOrder()));
+
+        return orders.get(0);
     }
 
     public int getId() {

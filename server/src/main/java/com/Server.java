@@ -37,18 +37,30 @@ public class Server {
 
     public static void handleRequest(Socket clientSocket) {
         try {
+            boolean secondEmptyLine = false;
             InputStreamReader isr = new InputStreamReader(clientSocket.getInputStream());
             OutputStreamWriter osw = new OutputStreamWriter(clientSocket.getOutputStream());
             BufferedReader bufferedReader = new BufferedReader(isr);
             BufferedWriter bufferedWriter = new BufferedWriter(osw);
 
+            System.out.println("someone connected");
+
             // Read the client request
             StringBuilder requestBuilder = new StringBuilder();
             String line;
-            while ((line = bufferedReader.readLine()) != null && !line.isEmpty()) {
+
+            while ((line = bufferedReader.readLine()) != null) {
+                if (line.isEmpty()) {
+                    if (secondEmptyLine) {
+                        break; // Exit the loop when the second empty line is encountered
+                    }
+                    secondEmptyLine = true;
+                    continue;
+                }
                 requestBuilder.append(line);
                 requestBuilder.append("\r\n");
             }
+
             String request = requestBuilder.toString();
 
             // Generate response
@@ -57,6 +69,7 @@ public class Server {
             // Send response to client
             bufferedWriter.write(response);
             bufferedWriter.flush();
+            bufferedWriter.close();
             clientSocket.close();
 
         } catch (IOException e) {
@@ -67,7 +80,7 @@ public class Server {
 
     public static String generateResponse(String request) {
         // Extract lines, HTTP method, and path
-        String[] lines = request.split("/r/n");
+        String[] lines = request.split("\r\n");
         String method = lines[0].split(" ")[0];
         String path = lines[0].split(" ")[1];
         String parameters = "";
@@ -95,7 +108,7 @@ public class Server {
         // user-register endpoint
         if (method.equals("POST") && path.equals("/user-register")) {
             User user = gson.fromJson(body, User.class);
-            
+
             // Perform checks
             if (!isValidName(user.getName(), 30)) {
                 return "HTTP/1.1 401 Unauthorized\r\n\r\nInvalid name";
@@ -178,7 +191,7 @@ public class Server {
                 return response;
             }
             else {
-                return "HTTP/1.1 401 Unauthorized\r\n\r\nLogin error";
+                return "HTTP/1.1 401 Unauthorized\r\n\r\nWrong mail address or password";
             }
         }
 
@@ -212,7 +225,13 @@ public class Server {
 
         // restaurants endpoint, returns the list of restaurants in the same district with the user
         if (method.equals("GET") && path.equals("/restaurants")) {
-            Address address = gson.fromJson(body, Address.class);
+
+            // Check parameters
+            if (!parameters.split("=")[0].equals("addressId")) {
+                return "HTTP/1.1 401 Unauthorized\r\n\r\nInvalid parameters";
+            }
+            int addressId = Integer.parseInt(parameters.split("=")[1]);
+            Address address = Database.getAddress(addressId);
             
             // Perform checks
             if (!isValidAddress(address)) {
@@ -232,6 +251,7 @@ public class Server {
                 return response;
 
             } catch (SQLException e) {
+                System.out.println(e);
                 return "HTTP/1.1 401 Unauthorized\r\n\r\nCouldn't get restaurants";
             }
         }
@@ -256,7 +276,33 @@ public class Server {
                 + json;
                 return response;
             } catch (SQLException e) {
+                System.out.println(e);
                 return "HTTP/1.1 401 Unauthorized\r\n\r\nCouldn't get orders";
+            }
+        }
+
+        // user-addresses endpoint, returns addresses of the user
+        if (method.equals("GET") && path.equals("/user-addresses")) {
+
+            // Check parameters
+            if (!parameters.split("=")[0].equals("userId")) {
+                return "HTTP/1.1 401 Unauthorized\r\n\r\nInvalid parameters";
+            }
+            int userId = Integer.parseInt(parameters.split("=")[1]);
+
+            try {
+                ArrayList<Address> addresses = Database.getAddressesOfUser(userId);
+                String json = gson.toJson(addresses, new TypeToken<List<Address>>(){}.getType());
+
+                String response = "HTTP/1.1 200 OK\r\n"
+                + "Content-Type: application/json\r\n"
+                + "Content-Length: " + json.length()
+                +"\r\n"
+                + json;
+                return response;
+            } catch (Exception e) {
+                System.out.println(e);
+                return "HTTP/1.1 401 Unauthorized\r\n\r\nCouldn't get addresses";
             }
         }
 
@@ -279,6 +325,7 @@ public class Server {
                 + json;
                 return response;
             } catch (Exception e) {
+                System.out.println(e);
                 return "HTTP/1.1 401 Unauthorized\r\n\r\nCouldn't get orders";
             }
         }
@@ -296,6 +343,7 @@ public class Server {
                 Database.updateCart(user);
                 return "HTTP/1.1 200 OK\r\n\r\nCart updated";
             } catch (SQLException e) {
+                System.out.println(e);
                 return "HTTP/1.1 401 Unauthorized\r\n\r\nCouldn't update cart";
             }
 
@@ -307,6 +355,7 @@ public class Server {
             try {
                 Database.saveOrder(order);
             } catch (SQLException e) {
+                System.out.println(e);
                 return "HTTP/1.1 401 Unauthorized\r\n\r\nCouldn't send order";
             }
         }
@@ -317,6 +366,7 @@ public class Server {
             try {
                 Database.updateStatusOfOrder(order);
             } catch (SQLException e) {
+                System.out.println(e);
                 return "HTTP/1.1 401 Unauthorized\r\n\r\nCouldn't update order";
             }
         }
@@ -327,6 +377,7 @@ public class Server {
             try {
                 Database.updateStatusOfFood(food);
             } catch (SQLException e) {
+                System.out.println(e);
                 return "HTTP/1.1 401 Unauthorized\r\n\r\nCouldn't update food";
             }
         }
@@ -336,7 +387,7 @@ public class Server {
             Address address = gson.fromJson(body, Address.class);
 
             // Check parameters
-            if (parameters.split("=")[0].equals("userId")) {
+            if (!parameters.split("=")[0].equals("userId")) {
                 return "HTTP/1.1 401 Unauthorized\r\n\r\nInvalid parameters";
             }
             int userId = Integer.parseInt(parameters.split("=")[1]);
@@ -348,7 +399,9 @@ public class Server {
 
             try {
                 Database.saveUserAddress(address, userId);
+                return "HTTP/1.1 201 Created\r\n\r\nAddress successfully added";
             } catch (SQLException e) {
+                System.out.println(e);
                 return "HTTP/1.1 401 Unauthorized\r\n\r\nAddress couldn't be added";
             }
         }
@@ -371,6 +424,7 @@ public class Server {
             try {
                 Database.deleteUserAddress(address, userId);
             } catch (SQLException e) {
+                System.out.println(e);
                 return "HTTP/1.1 401 Unauthorized\r\n\r\nAddress couldn't be deleted";
             }
         }

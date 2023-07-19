@@ -6,6 +6,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -68,8 +69,8 @@ public class OrdersActivity extends AppCompatActivity {
 
             @Override
             public void onClick(View view) {
-                int position = getAdapterPosition();
-                // Move to order activity
+                Intent orderDisplayIntent = new Intent (view.getContext(), OrderDisplayActivity.class);
+                startActivity(orderDisplayIntent);
             }
 
             public void bind(Order order) {

@@ -16,7 +16,7 @@
         android:layout_gravity="center_horizontal" />
 
     <EditText
-        android:id="@+id/editTextTitle"
+        android:id="@+id/title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Title"
@@ -25,7 +25,7 @@
         android:layout_marginEnd="16dp" />
 
     <EditText
-        android:id="@+id/editTextCity"
+        android:id="@+id/city"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="City"
@@ -35,7 +35,7 @@
         android:layout_marginTop="16dp" />
 
     <EditText
-        android:id="@+id/editTextDistrict"
+        android:id="@+id/district"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="District"
@@ -45,7 +45,7 @@
         android:layout_marginTop="16dp" />
 
     <EditText
-        android:id="@+id/editTextFullAddress"
+        android:id="@+id/fullAddress"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Full Address"

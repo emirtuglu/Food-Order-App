@@ -11,6 +11,7 @@ public class Order {
     private int id;
     private int restaurantId;
     private int userId;
+    private String restaurantName;
     private String time;
     private double price;
     private Status status;
@@ -19,10 +20,11 @@ public class Order {
     public Order() {
     }
 
-    public Order(int id, int restaurantId, int userId, String time, double price, Status status, HashMap<Food,Integer> foods) {
+    public Order(int id, int restaurantId, int userId, String restaurantName, String time, double price, Status status, HashMap<Food,Integer> foods) {
         this.id = id;
         this.restaurantId = restaurantId;
         this.userId = userId;
+        this.restaurantName = restaurantName;
         this.time = time;
         this.price = price;
         this.status = status;
@@ -51,6 +53,14 @@ public class Order {
 
     public void setUserId(int userId) {
         this.userId = userId;
+    }
+
+    public String getRestaurantName() {
+        return this.restaurantName;
+    }
+
+    public void setRestaurantName( String restaurantName) {
+        this.restaurantName = restaurantName;
     }
 
     public String getTime() {

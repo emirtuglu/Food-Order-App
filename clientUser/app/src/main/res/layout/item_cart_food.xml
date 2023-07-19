@@ -1,0 +1,86 @@
+<!-- item_cart_food.xml -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingLeft="16dp"
+        android:paddingRight="8dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
+
+        <ImageView
+            android:id="@+id/foodImageView"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/default_food_picture" />
+
+        <TextView
+            android:id="@+id/foodName"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="Food Name"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:gravity="center_vertical"
+            android:paddingLeft="14dp"/>
+
+        <LinearLayout
+            android:id="@+id/quantityContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingLeft="16dp">
+
+            <Button
+                android:id="@+id/minusButton"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:text="-" />
+
+            <TextView
+                android:id="@+id/quantity"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:gravity="center"
+                android:text="0" />
+
+            <Button
+                android:id="@+id/plusButton"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:text="+" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/foodPrice"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="Price"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:gravity="right|center_vertical"
+            android:paddingRight="20dp"/>
+
+
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/black" />
+
+
+</LinearLayout>
+

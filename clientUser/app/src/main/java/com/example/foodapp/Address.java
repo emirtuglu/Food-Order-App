@@ -19,8 +19,7 @@ public class Address {
         this.fullAddress = fullAddress;
     }
 
-    public Address(int id, String title, String city, String district, String fullAddress) {
-        this.id = id;
+    public Address(String title, String city, String district, String fullAddress) {
         this.title = title;
         this.city = city;
         this.district = district;

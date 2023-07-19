@@ -6,11 +6,13 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -39,6 +41,15 @@ public class RestaurantMenuActivity extends AppCompatActivity {
         MenuAdapter menuAdapter = new MenuAdapter(menu, this);
         recyclerViewMenu.setAdapter(menuAdapter);
         menuAdapter.notifyDataSetChanged(); // Notify when dataset changed
+
+        ImageView cartImage = findViewById(R.id.cartImage);
+        cartImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent cartActivityIntent = new Intent (view.getContext(), CartActivity.class);
+                startActivity(cartActivityIntent);
+            }
+        });
     }
 
     public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.ViewHolder> {

@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -14,12 +15,17 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.content.Intent;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 import java.util.ArrayList;
+import java.util.List;
 
 public class AddressSelectActivity extends AppCompatActivity {
 
     private RecyclerView recyclerViewAddresses;
     private ArrayList<Address> addressList;
+    private User user;
     private Button buttonAddAddress;
     private AddressAdapter addressAdapter;
 
@@ -28,29 +34,53 @@ public class AddressSelectActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_address_select);
 
-        recyclerViewAddresses = findViewById(R.id.recyclerViewAddresses);
-        buttonAddAddress = findViewById(R.id.buttonAddAddress);
+        Gson gson = new Gson();
+        user = gson.fromJson(getIntent().getStringExtra("user"), User.class);
 
+        recyclerViewAddresses = findViewById(R.id.recyclerViewAddresses);
         recyclerViewAddresses.setLayoutManager(new LinearLayoutManager(this));
 
         // Initialize the address list
-        addressList = new ArrayList<Address>();
+        addressList = user.getAddresses();
         addressAdapter = new AddressAdapter(addressList, this);
         recyclerViewAddresses.setAdapter(addressAdapter);
-        addressList.add(new Address(1, "title", "city", "distict", "fullll"));
-        addressList.add(new Address(2, "title2", "city2", "distict22", "fullll2234324"));
-        addressList.add(new Address(3, "title3", "city3", "distict3333", "fullll33333333"));
         addressAdapter.notifyDataSetChanged(); // Notify when dataset changed
 
+        TextView addAddressText = findViewById(R.id.addAddressText);
+        if (addressList.size() == 0) {
+            addAddressText.setText("You haven't added any addresses yet. Click + to add.");
+        }
+
+        buttonAddAddress = findViewById(R.id.buttonAddAddress);
         buttonAddAddress.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent addressAddActivityIntent = new Intent(view.getContext(), AddressAddActivity.class);
-                startActivity(addressAddActivityIntent);
+                addressAddActivityIntent.putExtra("user", gson.toJson(user, User.class));
+                startActivityForResult(addressAddActivityIntent, 1);
             }
         });
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        Gson gson = new Gson();
+
+        if (requestCode == 1) {
+            if(resultCode == Activity.RESULT_OK){
+                String userJson = data.getStringExtra("user");
+                user = gson.fromJson(userJson, User.class);
+                addressList = user.getAddresses();
+                addressAdapter = new AddressAdapter(addressList, this);
+                recyclerViewAddresses.setAdapter(addressAdapter);
+                addressAdapter.notifyDataSetChanged(); // Notify when dataset changed
+            }
+            if (resultCode == Activity.RESULT_CANCELED) {
+                // Write your code if there's no result
+            }
+        }
+    }
 
     public class AddressAdapter extends RecyclerView.Adapter<AddressAdapter.ViewHolder> {
 
@@ -75,9 +105,14 @@ public class AddressSelectActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 int position = getAdapterPosition();
-                // Move to new activity and display restaurants
+                Gson gson = new Gson();
+                Address clickedAddress = addressList.get(position);
+                String addressJson = gson.toJson(clickedAddress, Address.class);
 
+                // Move to new activity and display restaurants
                 Intent restaurantSelectActivityIntent = new Intent(view.getContext(), RestaurantSelectActivity.class);
+                restaurantSelectActivityIntent.putExtra("address", addressJson);
+                restaurantSelectActivityIntent.putExtra("user", gson.toJson(user, User.class));
                 startActivity(restaurantSelectActivityIntent);
             }
 
