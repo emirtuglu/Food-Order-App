@@ -157,7 +157,7 @@ public class Database {
      * @param address
      * @param userId
      */
-    public static void deleteUserAddress (Address address, int userId) throws SQLException {
+    public static void deleteUserAddress (Address address) throws SQLException {
 
         // Delete user-address relation 
         PreparedStatement pstmt = conn.prepareStatement(("DELETE FROM user_addresses WHERE address_id = ?"));
@@ -301,7 +301,7 @@ public class Database {
                 int id = rs.getInt("id");
                 ArrayList<Address> addresses = getAddressesOfUser(id);
                 ArrayList<Order> orders = getOrdersOfUser(id);
-                HashMap<Food, Integer> cart = getCartOfUser(id);
+                ArrayList<Food> cart = getCartOfUser(id);
                 User user = new User(id, rs.getString("name"), rs.getString("surname"), rs.getString("phone_number"), mail, addresses, orders, cart);
                 return user;
             }
@@ -328,7 +328,7 @@ public class Database {
             if (rs.next()) {
                 ArrayList<Address> addresses = getAddressesOfUser(id);
                 ArrayList<Order> orders = getOrdersOfUser(id);
-                HashMap<Food, Integer> cart = getCartOfUser(id);
+                ArrayList<Food> cart = getCartOfUser(id);
                 User user = new User(id, rs.getString("name"), rs.getString("surname"), rs.getString("phone_number"), rs.getString("mail"), addresses, orders, cart);
                 return user;
             }
@@ -395,15 +395,15 @@ public class Database {
      */
     public static Food getFood (int id) {
         try {
-            PreparedStatement pstmt = conn.prepareStatement("SELECT restaurant_id, name, description, quantity, price, enabled FROM foods WHERE id = ?");
+            PreparedStatement pstmt = conn.prepareStatement("SELECT restaurant_id, name, restaurant_name, description, price, enabled FROM foods WHERE id = ?");
             pstmt.setInt(1, id);
             ResultSet rs = pstmt.executeQuery();
             
             if (rs.next()) {
-                return new Food(id, rs.getInt("restaurant_id"), rs.getString("name"), rs.getString("description"), rs.getInt("quantity"), rs.getDouble("price"), rs.getBoolean("enabled"));
+                return new Food(id, rs.getInt("restaurant_id"), rs.getString("name"), rs.getString("restaurant_name"), rs.getString("description"), rs.getDouble("price"), rs.getBoolean("enabled"));
             }
             return null;
-            
+
         } catch (SQLException e) {
             System.out.println("getFood error");
             System.out.println(e);
@@ -502,18 +502,18 @@ public class Database {
     public static ArrayList<Food> getMenuOfRestaurant (int restaurantId) {
         ArrayList<Food> foods = new ArrayList<Food>();
         try {
-            PreparedStatement pstmt = conn.prepareStatement("SELECT id, name, description, quantity, price, enabled FROM foods WHERE restaurant_id = ?");
+            PreparedStatement pstmt = conn.prepareStatement("SELECT id, name, restaurant_name, description, price, enabled FROM foods WHERE restaurant_id = ?");
             pstmt.setInt(1, restaurantId);
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
                 int id = rs.getInt("id");
                 String name = rs.getString("name");
+                String restaurantName = rs.getString("restaurant_name");
                 String description = rs.getString("description");
-                int quantity = rs.getInt("quantity");
                 double price = rs.getDouble("price");
                 boolean enabled = rs.getBoolean("enabled");
-                Food food = new Food(id, restaurantId, name, description, quantity, price, enabled);
+                Food food = new Food(id, restaurantId, name, restaurantName, description, price, enabled);
                 foods.add(food);
             }
             return foods;
@@ -543,7 +543,7 @@ public class Database {
             String time = rs.getString("time");
             double price = rs.getDouble("price");
             Status status = Status.valueOf(rs.getString("status"));
-            HashMap<Food, Integer> foods = getFoodsOfOrder(id);
+            ArrayList<Food> foods = getFoodsOfOrder(id);
 
             Order order = new Order(id, restaurantId, userId, restaurantName, time, price, status, foods);
             orders.add(order);
@@ -571,7 +571,7 @@ public class Database {
             String time = rs.getString("time");
             double price = rs.getDouble("price");
             Status status = Status.valueOf(rs.getString("status"));
-            HashMap<Food, Integer> foods = getFoodsOfOrder(id);
+            ArrayList<Food> foods = getFoodsOfOrder(id);
 
             Order order = new Order(id, restaurantId, userId, restaurantName, time, price, status, foods);
             orders.add(order);
@@ -584,8 +584,8 @@ public class Database {
      * @param orderId
      * @return
      */
-    public static HashMap<Food, Integer> getFoodsOfOrder (int orderId) {
-        HashMap<Food, Integer> foods = new HashMap<Food, Integer>();
+    public static ArrayList<Food> getFoodsOfOrder (int orderId) {
+        ArrayList<Food> foods = new ArrayList<Food>();
 
         try {
             PreparedStatement pstmt = conn.prepareStatement("SELECT food_id, quantity FROM ordered_foods WHERE order_id = ?");
@@ -596,7 +596,8 @@ public class Database {
                 int foodId = rs.getInt("food_id");
                 int quantity = rs.getInt("quantity");
                 Food food = getFood(foodId);
-                foods.put(food, quantity);
+                food.setQuantity(quantity);
+                foods.add(food);
             }
             return foods;
         } catch (SQLException e) {
@@ -614,24 +615,41 @@ public class Database {
         // Get time
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
         LocalDateTime now = LocalDateTime.now();
+        order.setTime(dtf.format(now));
 
         // Save order
-        PreparedStatement pstmt = conn.prepareStatement("INSERT INTO orders (restaurant_id, user_id, time, price, status) VALUES (?, ?, ?, ?, ?)");
+        PreparedStatement pstmt = conn.prepareStatement("INSERT INTO orders (restaurant_id, user_id, restaurant_name, time, price, status) VALUES (?, ?, ?, ?, ?, ?)");
         pstmt.setInt(1, order.getRestaurantId());
         pstmt.setInt(2, order.getUserId());
-        pstmt.setString(3, dtf.format(now));
-        pstmt.setDouble(4, order.getPrice());
-        pstmt.setString(5, order.getStatus().toString());
+        pstmt.setString(3, order.getRestaurantName());
+        pstmt.setString(4, dtf.format(now));
+        pstmt.setDouble(5, order.getPrice());
+        pstmt.setString(6, order.getStatus().toString());
         pstmt.executeUpdate();
 
-        // Save ordered foods
-        for (Food food : order.getFoods().keySet()) {
-            PreparedStatement pstmt2 = conn.prepareStatement("INSERT INTO ordered_foods (order_id, food_id, quantity) VALUES (?, ?, ?)");
-            pstmt2.setInt(1, order.getId());
-            pstmt2.setInt(2, food.getId());
-            pstmt2.setInt(3, order.getFoods().get(food));
-            pstmt2.executeUpdate();
+        // Get id of order
+        int id = -1;
+        PreparedStatement pstmt2 = conn.prepareStatement("SELECT id FROM orders WHERE user_id = ? AND time = ? ORDER BY id DESC LIMIT 1");
+        pstmt2.setInt(1, order.getUserId());
+        pstmt2.setString(2, order.getTime());
+        ResultSet rs = pstmt2.executeQuery();
+        if (rs.next()) {
+            id = rs.getInt("id");
         }
+
+        // Save ordered foods
+        for (Food food : order.getFoods()) {
+            PreparedStatement pstmt3 = conn.prepareStatement("INSERT INTO ordered_foods (order_id, food_id, quantity) VALUES (?, ?, ?)");
+            pstmt3.setInt(1, id);
+            pstmt3.setInt(2, food.getId());
+            pstmt3.setInt(3, food.getQuantity());
+            pstmt3.executeUpdate();
+        }
+
+        // Clear user's cart
+        User user = getUser(order.getUserId());
+        user.setCart(new ArrayList<Food>());
+        updateCart(user);
     }
 
     /**
@@ -649,8 +667,8 @@ public class Database {
      * @param id
      * @return Map containing foods and their quantities
      */
-    public static HashMap<Food, Integer> getCartOfUser (int id) {
-        HashMap<Food, Integer> cart = new HashMap<Food, Integer>();
+    public static ArrayList<Food> getCartOfUser (int id) {
+        ArrayList<Food> cart = new ArrayList<Food>();
         try {
             PreparedStatement pstmt = conn.prepareStatement("SELECT food_id, quantity FROM cart_foods WHERE user_id = ?");
             pstmt.setInt(1, id);
@@ -658,7 +676,8 @@ public class Database {
 
             while (rs.next()) {
                 Food food = getFood(rs.getInt("food_id"));
-                cart.put(food, rs.getInt("quantity"));
+                food.setQuantity(rs.getInt("quantity"));
+                cart.add(food);
             }
             return cart;
             
@@ -680,11 +699,11 @@ public class Database {
         pstmt.executeUpdate();
 
         // Add foods in the cart of the user to database
-        for (Food food : user.getCart().keySet()) {
+        for (Food food : user.getCart()) {
             PreparedStatement pstmt2 = conn.prepareStatement("INSERT INTO cart_foods (user_id, food_id, quantity) VALUES (?, ?, ?)");
             pstmt2.setInt(1, user.getId());
             pstmt2.setInt(2, food.getId());
-            pstmt2.setInt(3, user.getCart().get(food));
+            pstmt2.setInt(3, food.getQuantity());
             pstmt2.executeUpdate();
         }
     }
@@ -730,7 +749,7 @@ public class Database {
     public static void updateFoodQuantityInCard (User user, Food food) {
         try {
             PreparedStatement pstmt = conn.prepareStatement("UPDATE cart_foods SET quantity = ? WHERE user_id = ? AND food_id = ?");
-            pstmt.setInt(1, user.getCart().get(food));
+            pstmt.setInt(1, food.getQuantity());
             pstmt.setInt(2, user.getId());
             pstmt.setInt(3, food.getId());
             pstmt.executeUpdate();

@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,6 +21,8 @@ import com.google.gson.reflect.TypeToken;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class RestaurantSelectActivity extends AppCompatActivity {
 
@@ -28,41 +31,40 @@ public class RestaurantSelectActivity extends AppCompatActivity {
     private User user;
     private Address address;
 
+    private Handler handler;
+    private Runnable runnable;
+    private Gson gson;
+    private String ordersRefreshRequestString;
+    private OrderAdapter orderAdapter;
+    private int refreshOrdersDelay = 10000; // 10 seconds
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_restaurant_select);
 
+        handler = new Handler();
         RequestManager requestManager = new RequestManager();
-        Gson gson = new Gson();
+        gson = new Gson();
+
         String addressJson = getIntent().getStringExtra("address");
         String userJson = getIntent().getStringExtra("user");
 
         address = gson.fromJson(addressJson, Address.class);
         user = gson.fromJson(userJson, User.class);
 
+        ordersRefreshRequestString = RequestManager.requestBuild("GET", "/user-orders", "userId", String.valueOf(user.getId()), null);
         String request = RequestManager.requestBuild("GET", "/restaurants", "addressId", String.valueOf(address.getId()), addressJson);
         String response = null;
         try {
             response = requestManager.execute(request).get();
         } catch (Exception e) {
-            Log.i("error", e.toString());
+
         }
 
         String restaurantsJson = RequestManager.getBody(response);
         restaurantsList = gson.fromJson(restaurantsJson, new TypeToken<List<Restaurant>>(){}.getType());
         ordersList = new ArrayList<Order>();
-        if (user.getLastOrder() != null) {
-            ordersList.add(user.getLastOrder());
-        }
-
-        if (ordersList.size() == 0) {
-            TextView lastOrderText = findViewById(R.id.lastOrderText);
-            TextView seeAll = findViewById(R.id.seeAllOrdersText);
-
-            lastOrderText.setText("You don't have any order yet");
-            seeAll.setVisibility(View.INVISIBLE);
-        }
 
         RecyclerView recyclerViewOrders = findViewById(R.id.recyclerViewOrders);
         RecyclerView recyclerViewRestaurants = findViewById(R.id.recyclerViewRestaurants);
@@ -70,13 +72,12 @@ public class RestaurantSelectActivity extends AppCompatActivity {
         recyclerViewOrders.setLayoutManager(new LinearLayoutManager(this));
         recyclerViewRestaurants.setLayoutManager(new LinearLayoutManager(this));
 
-        OrderAdapter ordersAdapter = new OrderAdapter(ordersList, this);
+        orderAdapter = new OrderAdapter(ordersList, this);
         RestaurantAdapter restaurantsAdapter = new RestaurantAdapter(restaurantsList, this);
 
-        recyclerViewOrders.setAdapter(ordersAdapter);
+        recyclerViewOrders.setAdapter(orderAdapter);
         recyclerViewRestaurants.setAdapter(restaurantsAdapter);
 
-        ordersAdapter.notifyDataSetChanged(); // Notify when dataset changed
         restaurantsAdapter.notifyDataSetChanged();
 
         TextView seeAllOrdersText = findViewById(R.id.seeAllOrdersText);
@@ -93,9 +94,68 @@ public class RestaurantSelectActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent cartActivityIntent = new Intent (view.getContext(), CartActivity.class);
+                cartActivityIntent.putExtra("user", userJson);
                 startActivity(cartActivityIntent);
             }
         });
+    }
+
+    @Override
+    protected void onResume() {
+        // Update cart
+        RequestManager requestManager = new RequestManager();
+        String request = RequestManager.requestBuild("GET", "/user-cart", "userId", String.valueOf(user.getId()), null);
+        String response = null;
+        try {
+            response = requestManager.execute(request).get();
+        } catch (Exception e) {
+
+        }
+        String cartJson = RequestManager.getBody(response);
+        if (cartJson.length() > 3) {
+            user.setCart(gson.fromJson(cartJson, new TypeToken<List<Food>>(){}.getType()));
+        }
+        else {
+            user.setCart(new ArrayList<Food>());
+        }
+
+        // Start handler as activity become visible
+        handler.postDelayed( runnable = new Runnable() {
+            public void run() {
+                String response = null;
+                try {
+                    response = requestManager.execute(ordersRefreshRequestString).get();
+                } catch (Exception e) {
+
+                }
+
+                String ordersJson = RequestManager.getBody(response);
+                user.setOrders(gson.fromJson(ordersJson, new TypeToken<List<Order>>(){}.getType()));
+                ordersList.clear();
+                if (user.getLastOrder() != null) {
+                    ordersList.add(user.getLastOrder());
+                }
+
+                if (ordersList.size() == 0) {
+                    TextView lastOrderText = findViewById(R.id.lastOrderText);
+                    TextView seeAll = findViewById(R.id.seeAllOrdersText);
+
+                    lastOrderText.setText("You don't have any order yet");
+                    seeAll.setVisibility(View.INVISIBLE);
+                }
+                orderAdapter.notifyDataSetChanged(); // Notify when dataset changed
+
+                handler.postDelayed(runnable, refreshOrdersDelay);
+            }
+        }, 1000);
+
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        handler.removeCallbacks(runnable); //stop handler when activity not visible
+        super.onPause();
     }
 
 
@@ -186,8 +246,11 @@ public class RestaurantSelectActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 int position = getAdapterPosition();
+                Restaurant clickedRestaurant = restaurantsList.get(position);
 
                 Intent restaurantMenuIntent = new Intent (view.getContext(), RestaurantMenuActivity.class);
+                restaurantMenuIntent.putExtra("restaurant", gson.toJson(clickedRestaurant, Restaurant.class));
+                restaurantMenuIntent.putExtra("user", gson.toJson(user, User.class));
                 startActivity(restaurantMenuIntent);
             }
 

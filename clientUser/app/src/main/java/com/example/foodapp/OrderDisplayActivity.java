@@ -26,12 +26,7 @@ public class OrderDisplayActivity extends AppCompatActivity {
         TextView totalPrice = findViewById(R.id.totalPrice);
 
         ArrayList<Food> foods = new ArrayList<Food>();
-        foods.add(new Food(1, 1, "Food A", "Fried X, Served with Y", 1, 32, true));
-        foods.add(new Food(1, 1, "dasdasdhsa", "Fried X, Served with Y", 1, 32, true));
-        foods.add(new Food(1, 1, "Ffdjkglfdgfd", "Fried X, Served with Y", 3, 32, true));
-        foods.add(new Food(1, 1, "Food A", "Fried X, Served with Y", 5, 32, true));
-        foods.add(new Food(1, 1, "Food A", "Fried X, Served with Y", 7, 32, true));
-        foods.add(new Food(1, 1, "Food A", "Fried X, Served with Y", 3, 32, true));
+        foods.add(new Food(1, 1, "Food A", "restaurant x", "Fried X, Served with Y", 1, 32, true));
 
         RecyclerView recyclerViewFoods = findViewById(R.id.recyclerViewFoods);
         recyclerViewFoods.setLayoutManager(new LinearLayoutManager(this));

@@ -1,19 +1,23 @@
 package com.example.foodapp;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.content.Intent;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -60,6 +64,7 @@ public class AddressSelectActivity extends AppCompatActivity {
                 startActivityForResult(addressAddActivityIntent, 1);
             }
         });
+
     }
 
     @Override
@@ -91,6 +96,7 @@ public class AddressSelectActivity extends AppCompatActivity {
             private final TextView titleView;
             private final TextView cityDistrictView;
             private final TextView fullAddressView;
+            private final ImageView deleteIcon;
 
             public ViewHolder(View view) {
                 super(view);
@@ -99,7 +105,9 @@ public class AddressSelectActivity extends AppCompatActivity {
                 titleView = (TextView) view.findViewById(R.id.addressTitle);
                 cityDistrictView = (TextView) view.findViewById(R.id.cityAndDistrict);
                 fullAddressView = (TextView) view.findViewById(R.id.fullAddress);
+                deleteIcon = (ImageView) view.findViewById(R.id.deleteIcon);
                 itemView.setOnClickListener(this);
+                deleteIcon.setOnClickListener(this);
             }
 
             @Override
@@ -109,11 +117,44 @@ public class AddressSelectActivity extends AppCompatActivity {
                 Address clickedAddress = addressList.get(position);
                 String addressJson = gson.toJson(clickedAddress, Address.class);
 
-                // Move to new activity and display restaurants
-                Intent restaurantSelectActivityIntent = new Intent(view.getContext(), RestaurantSelectActivity.class);
-                restaurantSelectActivityIntent.putExtra("address", addressJson);
-                restaurantSelectActivityIntent.putExtra("user", gson.toJson(user, User.class));
-                startActivity(restaurantSelectActivityIntent);
+                if (view.getId() == R.id.deleteIcon) {
+                    DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            switch (which){
+                                case DialogInterface.BUTTON_POSITIVE:
+                                    RequestManager requestManager = new RequestManager();
+                                    String addressJson = gson.toJson(clickedAddress, Address.class);
+                                    String request = RequestManager.requestBuild("POST", "/user-delete-address", null, null, addressJson);
+                                    String response = null;
+                                    try {
+                                        response = requestManager.execute(request).get();
+                                    } catch (Exception e) {
+                                    }
+                                    Toast.makeText(view.getContext(), RequestManager.getBody(response), Toast.LENGTH_SHORT).show();
+                                    if (response.contains("200 OK")) {
+                                        addressList.remove(clickedAddress);
+                                        addressAdapter.notifyDataSetChanged();
+                                    }
+                                    break;
+
+                                case DialogInterface.BUTTON_NEGATIVE:
+                                    //Do your No progress
+                                    break;
+                            }
+                        }
+                    };
+                    AlertDialog.Builder ab = new AlertDialog.Builder(view.getContext());
+                    ab.setMessage("Are you sure to delete?").setPositiveButton("Yes", dialogClickListener)
+                            .setNegativeButton("No", dialogClickListener).show();
+                }
+                else {
+                    // Move to new activity and display restaurants
+                    Intent restaurantSelectActivityIntent = new Intent(view.getContext(), RestaurantSelectActivity.class);
+                    restaurantSelectActivityIntent.putExtra("address", addressJson);
+                    restaurantSelectActivityIntent.putExtra("user", gson.toJson(user, User.class));
+                    startActivity(restaurantSelectActivityIntent);
+                }
             }
 
             public void bind(Address address) {

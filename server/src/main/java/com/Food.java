@@ -5,6 +5,7 @@ public class Food {
     private int id;
     private int restaurantId;
     private String name;
+    private String restaurantName;
     private String description;
     private int quantity;
     private double price;
@@ -12,6 +13,16 @@ public class Food {
 
 
     public Food() {
+    }
+
+    public Food(int id, int restaurantId, String name, String restaurantName, String description, double price, boolean enabled) {
+        this.id = id;
+        this.restaurantId = restaurantId;
+        this.name = name;
+        this.restaurantName = restaurantName;
+        this.description = description;
+        this.price = price;
+        this.enabled = enabled;
     }
 
     public Food(int id, int restaurantId, String name, String description, int quantity, double price, boolean enabled) {
@@ -42,6 +53,14 @@ public class Food {
 
     public String getName() {
         return this.name;
+    }
+
+    public String getRestaurantName() { 
+        return this.restaurantName; 
+    }
+
+    public void setRestaurantName(String restaurantName) { 
+        this.restaurantName = restaurantName; 
     }
 
     public void setName(String name) {

@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -12,54 +13,106 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class CartActivity extends AppCompatActivity {
+    private User user;
+    private ArrayList<Food> cart;
+    private Gson gson;
+    private FoodsAdapter foodsAdapter;
+    private RecyclerView recyclerViewFoods;
+    private TextView restaurantName;
+    private TextView totalPrice;
+    private ImageView restaurantImage;
+    private Button checkoutButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cart);
 
-        TextView restaurantName = findViewById(R.id.restaurantName);
-        TextView restaurantAddress = findViewById(R.id.restaurantAddress);
-        TextView totalPrice = findViewById(R.id.totalPrice);
+        RequestManager requestManager = new RequestManager();
+        gson = new Gson();
 
-        ArrayList<Food> foods = new ArrayList<Food>();
-        foods.add(new Food(1, 1, "Food A", "Fried X, Served with Y", 1, 32, true));
-        foods.add(new Food(1, 1, "dasdasdhsa", "Fried X, Served with Y", 1, 32, true));
-        foods.add(new Food(1, 1, "Ffdjkglfdgfd", "Fried X, Served with Y", 3, 32, true));
-        foods.add(new Food(1, 1, "Food A", "Fried X, Served with Y", 5, 32, true));
-        foods.add(new Food(1, 1, "Food A", "Fried X, Served with Y", 7, 32, true));
-        foods.add(new Food(1, 1, "Food A", "Fried X, Served with Y", 3, 32, true));
-        foods.add(new Food(1, 1, "Food A", "Fried X, Served with Y", 3, 32, true));
-        foods.add(new Food(1, 1, "Food A", "Fried X, Served with Y", 3, 32, true));
-        foods.add(new Food(1, 1, "Food A", "Fried X, Served with Y", 3, 32, true));
-        foods.add(new Food(1, 1, "Food A", "Fried X, Served with Y", 3, 32, true));
-        foods.add(new Food(1, 1, "Food A", "Fried X, Served with Y", 3, 32, true));
-        foods.add(new Food(1, 1, "Food A", "Fried X, Served with Y", 3, 32, true));
-        foods.add(new Food(1, 1, "Food A", "Fried X, Served with Y", 3, 32, true));
-        foods.add(new Food(1, 1, "Food A", "Fried X, Served with Y", 3, 32, true));
-        foods.add(new Food(1, 1, "Food A", "Fried X, Served with Y", 3, 32, true));
-        foods.add(new Food(1, 1, "Food A", "Fried X, Served with Y", 3, 32, true));
-
-        RecyclerView recyclerViewFoods = findViewById(R.id.recyclerViewFoods);
-        recyclerViewFoods.setLayoutManager(new LinearLayoutManager(this));
-
-        FoodsAdapter foodsAdapter = new FoodsAdapter(foods, this);
-        recyclerViewFoods.setAdapter(foodsAdapter);
-        foodsAdapter.notifyDataSetChanged(); // Notify when dataset changed
+        String userJson = getIntent().getStringExtra("user");
+        user = gson.fromJson(userJson, User.class);
+        cart = new ArrayList<Food>();
 
         Button checkoutButton = findViewById(R.id.checkoutButton);
         checkoutButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent orderCompletedActivityIntent = new Intent(view.getContext(), OrderCompletedActivity.class);
-                startActivity(orderCompletedActivityIntent);
+                Order order = new Order(cart.get(0).getRestaurantId(), user.getId(), cart.get(0).getRestaurantName(), user.getTotalPriceOfCart(), cart);
+                RequestManager requestManager = new RequestManager();
+                String request = RequestManager.requestBuild("POST", "/send-order", null, null, gson.toJson(order, Order.class));
+                String response = null;
+                try {
+                    response = requestManager.execute(request).get();
+                } catch (Exception e) {
+
+                }
+                if (response.contains("200 OK")) {
+                    user.setCart(new ArrayList<Food>());
+                    cart = user.getCart();
+                    foodsAdapter.notifyDataSetChanged();
+                    Intent orderCompletedActivityIntent = new Intent(view.getContext(), OrderCompletedActivity.class);
+                    startActivity(orderCompletedActivityIntent);
+                }
+                else {
+                    Toast.makeText(view.getContext(), RequestManager.getBody(response), Toast.LENGTH_SHORT).show();
+                }
             }
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        restaurantName = findViewById(R.id.restaurantName);
+        restaurantImage = findViewById(R.id.restaurantImage);
+        totalPrice = findViewById(R.id.totalPrice);
+        checkoutButton = findViewById(R.id.checkoutButton);
+
+        // Update cart
+        RequestManager requestManager = new RequestManager();
+        String request = RequestManager.requestBuild("GET", "/user-cart", "userId", String.valueOf(user.getId()), null);
+        String response = null;
+        try {
+            response = requestManager.execute(request).get();
+        } catch (Exception e) {
+
+        }
+        String cartJson = RequestManager.getBody(response);
+        if (cartJson.length() > 3) {
+            user.setCart(gson.fromJson(cartJson, new TypeToken<List<Food>>(){}.getType()));
+            restaurantName.setText(user.getCart().get(0).getRestaurantName());
+            restaurantImage.setVisibility(0);
+            totalPrice.setVisibility(0);
+            totalPrice.setText("Total Price: ₺" + user.getTotalPriceOfCart());
+            checkoutButton.setVisibility(0);
+        }
+        else { // Cart is empty
+            restaurantName.setText("Your cart is empty");
+            restaurantImage.setVisibility(4);
+            totalPrice.setVisibility(4);
+            checkoutButton.setVisibility(4);
+            user.setCart(new ArrayList<Food>());
+        }
+        cart = user.getCart();
+        recyclerViewFoods = findViewById(R.id.recyclerViewFoods);
+        recyclerViewFoods.setLayoutManager(new LinearLayoutManager(this));
+        foodsAdapter = new FoodsAdapter(cart, this);
+        recyclerViewFoods.setAdapter(foodsAdapter);
+        foodsAdapter.notifyDataSetChanged();
     }
 
     public class FoodsAdapter extends RecyclerView.Adapter<FoodsAdapter.ViewHolder> {
@@ -67,22 +120,86 @@ public class CartActivity extends AppCompatActivity {
         private ArrayList<Food> dataSet;
         private Context context;
 
-        public class ViewHolder extends RecyclerView.ViewHolder {
+        public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
             private final TextView foodName;
             private final TextView foodPrice;
             private final TextView quantity;
+            private final Button minusButton;
+            private final Button plusButton;
 
             public ViewHolder(View view) {
                 super(view);
                 foodName = (TextView) view.findViewById(R.id.foodName);
                 foodPrice = (TextView) view.findViewById(R.id.foodPrice);
+
+                minusButton = (Button) view.findViewById(R.id.minusButton);
                 quantity = (TextView) view.findViewById(R.id.quantity);
+                plusButton = (Button) view.findViewById(R.id.plusButton);
+
+                minusButton.setOnClickListener(this);
+                plusButton.setOnClickListener(this);
             }
 
             public void bind(Food food) {
                 foodName.setText(food.getName());
-                foodPrice.setText("₺" + String.valueOf(food.getPrice()));
+                foodPrice.setText("₺" + String.valueOf(food.getPrice() * food.getQuantity()));
                 quantity.setText(String.valueOf(food.getQuantity()));
+
+            }
+
+            @Override
+            public void onClick(View view) {
+                int position = getAdapterPosition();
+                Food clickedFood = user.getCart().get(position);
+
+                if (view.getId() == R.id.minusButton) {
+                    if (clickedFood.getQuantity() <= 0) {
+                        Toast.makeText(view.getContext(), "You already have 0 of this food.", Toast.LENGTH_SHORT).show();
+                    }
+                    else {
+                        clickedFood.decrementQuantity();
+                        updateCart(view, clickedFood, false);
+                    }
+                }
+                else if (view.getId() == R.id.plusButton) {
+                    clickedFood.incrementQuantity();
+                    updateCart(view, clickedFood, true);
+                }
+            }
+
+            public void updateCart(View view, Food clickedFood, boolean isAdd) {
+                if (!user.getCart().contains(clickedFood)) {
+                    user.getCart().add(clickedFood);
+                }
+                if (clickedFood.getQuantity() == 0) {
+                    user.getCart().remove(clickedFood);
+                }
+                RequestManager requestManager = new RequestManager();
+                String userJson = gson.toJson(user, User.class);
+                String request = RequestManager.requestBuild("POST", "/update-cart", null, null, userJson);
+                String response = null;
+                try {
+                    response = requestManager.execute(request).get();
+                } catch (Exception e) {
+
+                }
+                cart = user.getCart();
+                if (cart.isEmpty()) {
+                    restaurantName.setText("Your cart is empty");
+                    restaurantImage.setVisibility(4);
+                    totalPrice.setVisibility(4);
+                    checkoutButton.setVisibility(4);
+                }
+                else {
+                    restaurantName.setText(user.getCart().get(0).getRestaurantName());
+                    restaurantImage.setVisibility(0);
+                    totalPrice.setVisibility(0);
+                    totalPrice.setText("Total Price: ₺" + user.getTotalPriceOfCart());
+                    checkoutButton.setVisibility(0);
+                }
+                totalPrice.setText("Total Price: ₺" + user.getTotalPriceOfCart());
+                Toast.makeText(view.getContext(), RequestManager.getBody(response), Toast.LENGTH_SHORT).show();
+                foodsAdapter.notifyDataSetChanged();
             }
         }
 

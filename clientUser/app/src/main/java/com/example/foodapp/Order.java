@@ -1,6 +1,7 @@
 package com.example.foodapp;
 
 import java.util.Objects;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 enum Status {
@@ -15,19 +16,28 @@ public class Order {
     private String time;
     private double price;
     private Status status;
-    private HashMap<Food, Integer> foods;
+    private ArrayList<Food> foods;
 
     public Order() {
     }
 
-    public Order(int id, int restaurantId, int userId, String restaurantName, String time, double price, Status status, HashMap<Food,Integer> foods) {
+    public Order(int id, int restaurantId, int userId, String restaurantName, String time, double price, Status status, ArrayList<Food> foods) {
         this.id = id;
         this.restaurantId = restaurantId;
-        this.restaurantName = restaurantName;
         this.userId = userId;
+        this.restaurantName = restaurantName;
         this.time = time;
         this.price = price;
         this.status = status;
+        this.foods = foods;
+    }
+
+    public Order(int restaurantId, int userId, String restaurantName, double price, ArrayList<Food> foods) {
+        this.restaurantId = restaurantId;
+        this.userId = userId;
+        this.restaurantName = restaurantName;
+        this.time = time;
+        this.price = price;
         this.foods = foods;
     }
 
@@ -55,9 +65,13 @@ public class Order {
         this.userId = userId;
     }
 
-    public String getRestaurantName() { return this.restaurantName; }
+    public String getRestaurantName() {
+        return this.restaurantName;
+    }
 
-    public void setRestaurantName(String restaurantName) { this.restaurantName = restaurantName; }
+    public void setRestaurantName( String restaurantName) {
+        this.restaurantName = restaurantName;
+    }
 
     public String getTime() {
         return this.time;
@@ -83,11 +97,11 @@ public class Order {
         this.status = status;
     }
 
-    public HashMap<Food,Integer> getFoods() {
+    public ArrayList<Food> getFoods() {
         return this.foods;
     }
 
-    public void setFoods(HashMap<Food,Integer> foods) {
+    public void setFoods(ArrayList<Food> foods) {
         this.foods = foods;
     }
 
@@ -115,6 +129,5 @@ public class Order {
                 "}";
     }
 }
-
 
 

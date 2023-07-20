@@ -14,13 +14,13 @@ public class User {
     private String password;
     private ArrayList<Address> addresses;
     private ArrayList<Order> orders;
-    private HashMap<Food, Integer> cart;  // Associate foods with their quantities
+    private ArrayList<Food> cart;  // Associate foods with their quantities
 
 
     public User() {
     }
 
-    public User(int id, String name, String surname, String phoneNumber, String mail, ArrayList<Address> addresses, ArrayList<Order> orders, HashMap<Food,Integer> cart) {
+    public User(int id, String name, String surname, String phoneNumber, String mail, ArrayList<Address> addresses, ArrayList<Order> orders, ArrayList<Food> cart) {
         this.id = id;
         this.name = name;
         this.surname = surname;
@@ -42,6 +42,22 @@ public class User {
     public User(String mail, String password) {
         this.mail = mail;
         this.password = password;
+    }
+
+    public void changeQuantityOfFoodInCart (int id, int changeAmount) {
+        for (Food food : cart) {
+            if (food.getId() == id) {
+                food.setQuantity(food.getQuantity() + changeAmount);
+            }
+        }
+    }
+
+    public double getTotalPriceOfCart () {
+        double price = 0;
+        for (Food food : cart) {
+            price += food.getPrice() * food.getQuantity();
+        }
+        return price;
     }
 
     public Order getLastOrder() {
@@ -119,11 +135,11 @@ public class User {
         this.orders = orders;
     }
 
-    public HashMap<Food,Integer> getCart() {
+    public ArrayList<Food> getCart() {
         return this.cart;
     }
 
-    public void setCart(HashMap<Food,Integer> cart) {
+    public void setCart(ArrayList<Food> cart) {
         this.cart = cart;
     }
 

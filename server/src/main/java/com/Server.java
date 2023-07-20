@@ -281,6 +281,31 @@ public class Server {
             }
         }
 
+        // user-cart endpoint, returns cart of the user
+        if (method.equals("GET") && path.equals("/user-cart")) {
+
+            // Check parameters
+            if (!parameters.split("=")[0].equals("userId")) {
+                return "HTTP/1.1 401 Unauthorized\r\n\r\nInvalid parameters";
+            }
+            int userId = Integer.parseInt(parameters.split("=")[1]);
+
+            try {
+                ArrayList<Food> cart = Database.getCartOfUser(userId);
+                String json = gson.toJson(cart, new TypeToken<List<Food>>(){}.getType());
+
+                String response = "HTTP/1.1 200 OK\r\n"
+                + "Content-Type: application/json\r\n"
+                + "Content-Length: " + json.length()
+                +"\r\n"
+                + json;
+                return response;
+            } catch (Exception e) {
+                System.out.println(e);
+                return "HTTP/1.1 401 Unauthorized\r\n\r\nCouldn't get cart";
+            }
+        }
+
         // user-addresses endpoint, returns addresses of the user
         if (method.equals("GET") && path.equals("/user-addresses")) {
 
@@ -330,6 +355,31 @@ public class Server {
             }
         }
 
+        // restaurant-menu endpoint, returns menu of the restaurant
+        if (method.equals("GET") && path.equals("/restaurant-menu")) {
+
+            // Check parameters
+            if (!parameters.split("=")[0].equals("restaurantId")) {
+                return "HTTP/1.1 401 Unauthorized\r\n\r\nInvalid parameters";
+            }
+            int restaurantId = Integer.parseInt(parameters.split("=")[1]);
+
+            try {
+                ArrayList<Food> foods = Database.getMenuOfRestaurant(restaurantId);
+                String json = gson.toJson(foods, new TypeToken<List<Food>>(){}.getType());
+
+                String response = "HTTP/1.1 200 OK\r\n"
+                + "Content-Type: application/json\r\n"
+                + "Content-Length: " + json.length()
+                +"\r\n"
+                + json;
+                return response;
+            } catch (Exception e) {
+                System.out.println(e);
+                return "HTTP/1.1 401 Unauthorized\r\n\r\nCouldn't get menu";
+            }
+        }
+
         // update-cart endpoint, updates the cart of the user
         if (method.equals("POST") && path.equals("/update-cart")) {
             User user = gson.fromJson(body, User.class);
@@ -352,8 +402,10 @@ public class Server {
         // send-order endpoint, user sends an order
         if (method.equals("POST") && path.equals("/send-order")) {
             Order order = gson.fromJson(body, Order.class);
+            order.setStatus(Status.ACTIVE);
             try {
                 Database.saveOrder(order);
+                return "HTTP/1.1 200 OK\r\n\r\nOrder received";
             } catch (SQLException e) {
                 System.out.println(e);
                 return "HTTP/1.1 401 Unauthorized\r\n\r\nCouldn't send order";
@@ -410,19 +462,14 @@ public class Server {
         if (method.equals("POST") && path.equals("/user-delete-address")) {
             Address address = gson.fromJson(body, Address.class);
 
-            // Check parameters
-            if (parameters.split("=")[0].equals("userId")) {
-                return "HTTP/1.1 401 Unauthorized\r\n\r\nInvalid parameters";
-            }
-            int userId = Integer.parseInt(parameters.split("=")[1]);
-
             // Perform checks
             if (!isValidAddress(address)) {
                 return "HTTP/1.1 401 Unauthorized\r\n\r\nInvalid address";
             }
 
             try {
-                Database.deleteUserAddress(address, userId);
+                Database.deleteUserAddress(address);
+                return "HTTP/1.1 200 OK\r\n\r\nAddress successfully deleted";
             } catch (SQLException e) {
                 System.out.println(e);
                 return "HTTP/1.1 401 Unauthorized\r\n\r\nAddress couldn't be deleted";
@@ -510,11 +557,13 @@ public class Server {
         return false;
     }
 
-    public static boolean isValidCart (HashMap<Food, Integer> cart) {
+    public static boolean isValidCart (ArrayList<Food> cart) {
         // Check if all foods has same restaurant id
-        Set<Food> foods = cart.keySet();
-        int restaurantId = foods.stream().findFirst().get().getRestaurantId();
-        for (Food food : foods) {
+        if (cart.isEmpty()) {
+            return true;
+        }
+        int restaurantId = cart.get(0).getRestaurantId();
+        for (Food food : cart) {
             if (food.getRestaurantId() != restaurantId) {
                 return false;
             }

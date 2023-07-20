@@ -6,6 +6,7 @@ public class Food {
     private int id;
     private int restaurantId;
     private String name;
+    private String restaurantName;
     private String description;
     private int quantity;
     private double price;
@@ -15,10 +16,11 @@ public class Food {
     public Food() {
     }
 
-    public Food(int id, int restaurantId, String name, String description, int quantity, double price, boolean enabled) {
+    public Food(int id, int restaurantId, String name, String restaurantName, String description, int quantity, double price, boolean enabled) {
         this.id = id;
         this.restaurantId = restaurantId;
         this.name = name;
+        this.restaurantName = restaurantName;
         this.description = description;
         this.quantity = quantity;
         this.price = price;
@@ -49,6 +51,10 @@ public class Food {
         this.name = name;
     }
 
+    public String getRestaurantName() { return this.restaurantName; }
+
+    public void setRestaurantName(String restaurantName) { this.restaurantName = restaurantName; }
+
     public String getDescription() { return this.description; }
 
     public void setDescription(String description) { this.description = description; }
@@ -56,6 +62,10 @@ public class Food {
     public int getQuantity() { return this.quantity; }
 
     public void setQuantity(int quantity) { this.quantity = quantity; }
+
+    public void decrementQuantity() { this.quantity--; }
+
+    public void incrementQuantity() { this.quantity++; }
 
     public double getPrice() {
         return this.price;

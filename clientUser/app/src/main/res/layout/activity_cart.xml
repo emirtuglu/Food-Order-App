@@ -37,27 +37,20 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:orientation="vertical"
                 android:layout_marginStart="16dp">
 
                 <TextView
                     android:id="@+id/restaurantName"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:text="Restaurant Name"
                     android:textSize="24sp"
                     android:textStyle="bold"
-                    android:textColor="#000000" />
+                    android:textColor="#000000"
+                    android:gravity="center_vertical"/>
 
-                <TextView
-                    android:id="@+id/restaurantAddress"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingTop="14dp"
-                    android:text="Restaurant Address"
-                    android:textSize="14sp"
-                    android:textColor="#808080" />
 
             </LinearLayout>
 
