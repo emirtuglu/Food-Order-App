@@ -12,21 +12,35 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.google.gson.Gson;
+
 import java.util.ArrayList;
 
 public class OrderDisplayActivity extends AppCompatActivity {
+
+    private ArrayList<Food> foods;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_order_display);
 
-        TextView restaurantName = findViewById(R.id.restaurantName);
-        TextView restaurantAddress = findViewById(R.id.restaurantAddress);
-        TextView totalPrice = findViewById(R.id.totalPrice);
+        Gson gson = new Gson();
+        String orderJson = getIntent().getStringExtra("order");
+        Order order = gson.fromJson(orderJson, Order.class);
 
-        ArrayList<Food> foods = new ArrayList<Food>();
-        foods.add(new Food(1, 1, "Food A", "restaurant x", "Fried X, Served with Y", 1, 32, true));
+        TextView restaurantName = findViewById(R.id.restaurantName);
+        TextView orderStatus = findViewById(R.id.orderStatus);
+        TextView totalPrice = findViewById(R.id.totalPrice);
+        TextView date = findViewById(R.id.date);
+
+        restaurantName.setText(order.getRestaurantName());
+        orderStatus.setText(order.getStatusString());
+        totalPrice.setText("Total Price: ₺" + order.getPrice());
+        date.setText("Date: " + order.getTime());
+
+        foods = new ArrayList<Food>();
+        foods.addAll(order.getFoods());
 
         RecyclerView recyclerViewFoods = findViewById(R.id.recyclerViewFoods);
         recyclerViewFoods.setLayoutManager(new LinearLayoutManager(this));

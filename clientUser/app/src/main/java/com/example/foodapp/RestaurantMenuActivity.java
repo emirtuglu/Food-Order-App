@@ -5,7 +5,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -45,6 +44,12 @@ public class RestaurantMenuActivity extends AppCompatActivity {
         if (user.getCart() == null) {
             user.setCart(new ArrayList<Food>());
         }
+
+        TextView restaurantName = findViewById(R.id.restaurantName);
+        TextView restaurantAddress = findViewById(R.id.restaurantAddress);
+
+        restaurantName.setText(restaurant.getName());
+        restaurantAddress.setText(restaurant.getAddress().getFullAddress());
 
         // Update menu
         String request2 = RequestManager.requestBuild("GET", "/restaurant-menu", "restaurantId", String.valueOf(restaurant.getId()), null);
@@ -150,13 +155,13 @@ public class RestaurantMenuActivity extends AppCompatActivity {
                     }
                     else {
                         clickedFood.decrementQuantity();
-                        user.changeQuantityOfFoodInCart(clickedFood.getId(), -1);
+                        user.setQuantityOfFoodInCart(clickedFood.getId(), clickedFood.getQuantity());
                         updateCart(view, clickedFood, false);
                     }
                 }
                 else if (view.getId() == R.id.plusButton) {
                     clickedFood.incrementQuantity();
-                    user.changeQuantityOfFoodInCart(clickedFood.getId(), 1);
+                    user.setQuantityOfFoodInCart(clickedFood.getId(), clickedFood.getQuantity());
                     updateCart(view, clickedFood, true);
                 }
             }
@@ -166,6 +171,30 @@ public class RestaurantMenuActivity extends AppCompatActivity {
                 foodDescription.setText(food.getDescription());
                 foodPrice.setText("₺" + String.valueOf(food.getPrice()));
                 quantity.setText(String.valueOf(food.getQuantity()));
+                if (!food.isEnabled()) {
+                    itemView.setAlpha((float) 0.50);
+                    itemView.setBackgroundColor(getResources().getColor(R.color.gray_out));
+                    foodName.setTextColor(getResources().getColor(R.color.light_Black));
+                    foodDescription.setTextColor(getResources().getColor(R.color.light_Black));
+                    foodPrice.setTextColor(getResources().getColor(R.color.light_Black));
+                    quantity.setTextColor(getResources().getColor(R.color.light_Black));
+                    minusButton.setBackgroundColor(getResources().getColor(R.color.light_Black));
+                    plusButton.setBackgroundColor(getResources().getColor(R.color.light_Black));
+                    minusButton.setClickable(false);
+                    plusButton.setClickable(false);
+                }
+                else {
+                    itemView.setAlpha((float) 1);
+                    itemView.setBackgroundColor(getResources().getColor(R.color.white));
+                    foodName.setTextColor(getResources().getColor(R.color.black));
+                    foodDescription.setTextColor(getResources().getColor(R.color.black));
+                    foodPrice.setTextColor(getResources().getColor(R.color.black));
+                    quantity.setTextColor(getResources().getColor(R.color.black));
+                    minusButton.setBackgroundColor(getResources().getColor(R.color.white));
+                    plusButton.setBackgroundColor(getResources().getColor(R.color.white));
+                    minusButton.setClickable(true);
+                    plusButton.setClickable(true);
+                }
             }
 
             public void updateCart(View view, Food clickedFood, boolean isAdd) {

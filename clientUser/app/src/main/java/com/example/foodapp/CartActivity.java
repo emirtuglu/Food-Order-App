@@ -5,7 +5,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -46,6 +45,11 @@ public class CartActivity extends AppCompatActivity {
         user = gson.fromJson(userJson, User.class);
         cart = new ArrayList<Food>();
 
+        recyclerViewFoods = findViewById(R.id.recyclerViewFoods);
+        recyclerViewFoods.setLayoutManager(new LinearLayoutManager(this));
+        foodsAdapter = new FoodsAdapter(cart, this);
+        recyclerViewFoods.setAdapter(foodsAdapter);
+
         Button checkoutButton = findViewById(R.id.checkoutButton);
         checkoutButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -61,7 +65,7 @@ public class CartActivity extends AppCompatActivity {
                 }
                 if (response.contains("200 OK")) {
                     user.setCart(new ArrayList<Food>());
-                    cart = user.getCart();
+                    cart.clear();
                     foodsAdapter.notifyDataSetChanged();
                     Intent orderCompletedActivityIntent = new Intent(view.getContext(), OrderCompletedActivity.class);
                     startActivity(orderCompletedActivityIntent);
@@ -107,11 +111,8 @@ public class CartActivity extends AppCompatActivity {
             checkoutButton.setVisibility(4);
             user.setCart(new ArrayList<Food>());
         }
-        cart = user.getCart();
-        recyclerViewFoods = findViewById(R.id.recyclerViewFoods);
-        recyclerViewFoods.setLayoutManager(new LinearLayoutManager(this));
-        foodsAdapter = new FoodsAdapter(cart, this);
-        recyclerViewFoods.setAdapter(foodsAdapter);
+        cart.clear();
+        cart.addAll(user.getCart());
         foodsAdapter.notifyDataSetChanged();
     }
 
@@ -183,7 +184,8 @@ public class CartActivity extends AppCompatActivity {
                 } catch (Exception e) {
 
                 }
-                cart = user.getCart();
+                cart.clear();
+                cart.addAll(user.getCart());
                 if (cart.isEmpty()) {
                     restaurantName.setText("Your cart is empty");
                     restaurantImage.setVisibility(4);

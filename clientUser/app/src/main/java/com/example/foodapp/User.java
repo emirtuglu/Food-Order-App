@@ -44,10 +44,10 @@ public class User {
         this.password = password;
     }
 
-    public void changeQuantityOfFoodInCart (int id, int changeAmount) {
+    public void setQuantityOfFoodInCart (int id, int quantity) {
         for (Food food : cart) {
             if (food.getId() == id) {
-                food.setQuantity(food.getQuantity() + changeAmount);
+                food.setQuantity(quantity);
             }
         }
     }

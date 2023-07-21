@@ -1,14 +1,16 @@
 package com.example.foodapp;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Context;
+import android.content.DialogInterface;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,9 +22,8 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class RestaurantSelectActivity extends AppCompatActivity {
 
@@ -30,6 +31,8 @@ public class RestaurantSelectActivity extends AppCompatActivity {
     private ArrayList<Order> ordersList;
     private User user;
     private Address address;
+    private TextView lastOrderText;
+    private TextView seeAllText;
 
     private Handler handler;
     private Runnable runnable;
@@ -46,6 +49,8 @@ public class RestaurantSelectActivity extends AppCompatActivity {
         handler = new Handler();
         RequestManager requestManager = new RequestManager();
         gson = new Gson();
+        lastOrderText = findViewById(R.id.lastOrderText);
+        seeAllText = findViewById(R.id.seeAllOrdersText);
 
         String addressJson = getIntent().getStringExtra("address");
         String userJson = getIntent().getStringExtra("user");
@@ -61,7 +66,6 @@ public class RestaurantSelectActivity extends AppCompatActivity {
         } catch (Exception e) {
 
         }
-
         String restaurantsJson = RequestManager.getBody(response);
         restaurantsList = gson.fromJson(restaurantsJson, new TypeToken<List<Restaurant>>(){}.getType());
         ordersList = new ArrayList<Order>();
@@ -85,6 +89,7 @@ public class RestaurantSelectActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent ordersActivityIntent = new Intent (view.getContext(), OrdersActivity.class);
+                ordersActivityIntent.putExtra("userId", String.valueOf(user.getId()));
                 startActivity(ordersActivityIntent);
             }
         });
@@ -112,6 +117,7 @@ public class RestaurantSelectActivity extends AppCompatActivity {
 
         }
         String cartJson = RequestManager.getBody(response);
+        // Ensure user cart is not null
         if (cartJson.length() > 3) {
             user.setCart(gson.fromJson(cartJson, new TypeToken<List<Food>>(){}.getType()));
         }
@@ -122,26 +128,42 @@ public class RestaurantSelectActivity extends AppCompatActivity {
         // Start handler as activity become visible
         handler.postDelayed( runnable = new Runnable() {
             public void run() {
+                RequestManager requestManager2 = new RequestManager();
                 String response = null;
                 try {
-                    response = requestManager.execute(ordersRefreshRequestString).get();
+                    response = requestManager2.execute(ordersRefreshRequestString).get();
                 } catch (Exception e) {
 
                 }
 
                 String ordersJson = RequestManager.getBody(response);
-                user.setOrders(gson.fromJson(ordersJson, new TypeToken<List<Order>>(){}.getType()));
+
+                // Check if any orders are cancelled
+                user.getOrders().sort(Comparator.comparing(Order::getTime, Comparator.reverseOrder()));
+                ArrayList<Order> updatedOrders = gson.fromJson(ordersJson, new TypeToken<List<Order>>(){}.getType());
+                updatedOrders.sort(Comparator.comparing(Order::getTime, Comparator.reverseOrder()));
+                if (user.getOrders().size() > 0 && user.getOrders().size() == updatedOrders.size() && !user.getOrders().equals(updatedOrders)) {
+                    // Status of an order is changed
+                    for (int i = 0; i < user.getOrders().size(); i++) {
+                        if (!user.getOrders().get(i).getStatus().toString().equals(updatedOrders.get(i).getStatus().toString())) {
+                            if (updatedOrders.get(i).getStatus() == Status.USER_CANCELLED || updatedOrders.get(i).getStatus() == Status.RESTAURANT_CANCELLED) {
+                                // One of the orders is cancelled, notify user by sending dialog
+                                sendDialog(updatedOrders.get(i), updatedOrders.get(i).getStatus());
+                            }
+                        }
+                    }
+                }
+                user.setOrders(updatedOrders);
                 ordersList.clear();
                 if (user.getLastOrder() != null) {
                     ordersList.add(user.getLastOrder());
+                    lastOrderText.setText("Last Order");
+                    seeAllText.setVisibility(View.VISIBLE);
                 }
 
                 if (ordersList.size() == 0) {
-                    TextView lastOrderText = findViewById(R.id.lastOrderText);
-                    TextView seeAll = findViewById(R.id.seeAllOrdersText);
-
                     lastOrderText.setText("You don't have any order yet");
-                    seeAll.setVisibility(View.INVISIBLE);
+                    seeAllText.setVisibility(View.INVISIBLE);
                 }
                 orderAdapter.notifyDataSetChanged(); // Notify when dataset changed
 
@@ -158,6 +180,37 @@ public class RestaurantSelectActivity extends AppCompatActivity {
         super.onPause();
     }
 
+    public void sendDialog(Order order, Status status) {
+        MediaPlayer mediaPlayer = MediaPlayer.create(this, R.raw.notification_sound);
+        if (status == Status.USER_CANCELLED) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Order Cancelled");
+            builder.setMessage("Your cancel request has been confirmed by " + order.getRestaurantName());
+            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    // Perform any action if needed after the user clicks OK
+                }
+            });
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        }
+        else if (status == Status.RESTAURANT_CANCELLED) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Order Cancelled");
+            builder.setMessage("Your order has been cancelled by " + order.getRestaurantName());
+            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    // Perform any action if needed after the user clicks OK
+                }
+            });
+            mediaPlayer.start();
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        }
+    }
+
 
     public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.ViewHolder> {
 
@@ -165,7 +218,7 @@ public class RestaurantSelectActivity extends AppCompatActivity {
         private Context context;
 
         public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-            private final TextView restaurantName;
+            private final TextView restaurantNameOrder;
             private final TextView date;
             private final TextView status;
             private final TextView price;
@@ -175,7 +228,7 @@ public class RestaurantSelectActivity extends AppCompatActivity {
                 super(view);
                 // Define click listener for the ViewHolder's View
 
-                restaurantName = (TextView) view.findViewById(R.id.restaurantName);
+                restaurantNameOrder = (TextView) view.findViewById(R.id.restaurantNameOrder);
                 date = (TextView) view.findViewById(R.id.date);
                 status = (TextView) view.findViewById(R.id.status);
                 price = (TextView) view.findViewById(R.id.price);
@@ -187,13 +240,14 @@ public class RestaurantSelectActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent orderDisplayIntent = new Intent (view.getContext(), OrderDisplayActivity.class);
+                orderDisplayIntent.putExtra("order", gson.toJson(user.getLastOrder(), Order.class));
                 startActivity(orderDisplayIntent);
             }
 
             public void bind(Order order) {
-                restaurantName.setText(order.getRestaurantName());
+                restaurantNameOrder.setText(order.getRestaurantName());
                 date.setText(order.getTime());
-                status.setText(order.getStatus().toString());
+                status.setText(order.getStatusString());
                 price.setText("₺" + String.valueOf(order.getPrice()));
             }
         }

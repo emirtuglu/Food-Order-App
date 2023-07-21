@@ -4,7 +4,6 @@ import android.os.AsyncTask;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
@@ -54,17 +53,6 @@ public class RequestManager extends AsyncTask<String, String, String> {
         }
     }
 
-    public boolean disconnect() {
-        try {
-            if (socket != null && !socket.isClosed()) {
-                socket.close();
-            }
-            return true;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
 
     public static String requestBuild (String method, String path, String parameterName, String parameterValue, String body) {
         String request;

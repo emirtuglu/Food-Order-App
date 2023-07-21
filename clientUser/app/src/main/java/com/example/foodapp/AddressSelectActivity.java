@@ -20,10 +20,7 @@ import android.content.Intent;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
 import java.util.ArrayList;
-import java.util.List;
 
 public class AddressSelectActivity extends AppCompatActivity {
 
@@ -44,7 +41,6 @@ public class AddressSelectActivity extends AppCompatActivity {
         recyclerViewAddresses = findViewById(R.id.recyclerViewAddresses);
         recyclerViewAddresses.setLayoutManager(new LinearLayoutManager(this));
 
-        // Initialize the address list
         addressList = user.getAddresses();
         addressAdapter = new AddressAdapter(addressList, this);
         recyclerViewAddresses.setAdapter(addressAdapter);
@@ -72,14 +68,14 @@ public class AddressSelectActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         Gson gson = new Gson();
 
+        // Get added address
         if (requestCode == 1) {
             if(resultCode == Activity.RESULT_OK){
                 String userJson = data.getStringExtra("user");
                 user = gson.fromJson(userJson, User.class);
-                addressList = user.getAddresses();
-                addressAdapter = new AddressAdapter(addressList, this);
-                recyclerViewAddresses.setAdapter(addressAdapter);
-                addressAdapter.notifyDataSetChanged(); // Notify when dataset changed
+                addressList.clear();
+                addressList.addAll(user.getAddresses());
+                addressAdapter.notifyDataSetChanged();
             }
             if (resultCode == Activity.RESULT_CANCELED) {
                 // Write your code if there's no result
@@ -101,7 +97,6 @@ public class AddressSelectActivity extends AppCompatActivity {
             public ViewHolder(View view) {
                 super(view);
                 // Define click listener for the ViewHolder's View
-
                 titleView = (TextView) view.findViewById(R.id.addressTitle);
                 cityDistrictView = (TextView) view.findViewById(R.id.cityAndDistrict);
                 fullAddressView = (TextView) view.findViewById(R.id.fullAddress);
@@ -145,7 +140,7 @@ public class AddressSelectActivity extends AppCompatActivity {
                         }
                     };
                     AlertDialog.Builder ab = new AlertDialog.Builder(view.getContext());
-                    ab.setMessage("Are you sure to delete?").setPositiveButton("Yes", dialogClickListener)
+                    ab.setMessage("Are you sure to delete the address?").setPositiveButton("Yes", dialogClickListener)
                             .setNegativeButton("No", dialogClickListener).show();
                 }
                 else {

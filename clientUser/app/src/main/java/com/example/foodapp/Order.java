@@ -93,6 +93,25 @@ public class Order {
         return this.status;
     }
 
+    public String getStatusString() {
+        if (status == Status.ACTIVE) {
+            return "Your order is being prepared \uD83D\uDD52";
+        }
+        else if (status == Status.COMPLETED) {
+            return "Order has been delivered ✅";
+        }
+        else if (status == Status.USER_REQUESTED_CANCEL) {
+            return "Waiting for restaurant to confirm cancellation ⏳";
+        }
+        else if (status == Status.USER_CANCELLED) {
+            return "Order has been cancelled at your request \uD83D\uDED1";
+        }
+        else if (status == Status.RESTAURANT_CANCELLED) {
+            return "Restaurant has cancelled the order ❌";
+        }
+        return "";
+    }
+
     public void setStatus(Status status) {
         this.status = status;
     }
