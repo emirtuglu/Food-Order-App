@@ -154,8 +154,12 @@ public class Server {
             if (!isValidAddress(restaurant.getAddress())) {
                 return "HTTP/1.1 401 Unauthorized\r\n\r\nInvalid address";
             }
-
-            int addressId = Database.saveRestaurantAddress(restaurant, restaurant.getAddress());
+            int addressId = -1;
+            try {
+                addressId = Database.saveRestaurantAddress(restaurant, restaurant.getAddress());
+            } catch (SQLException e) {
+                System.out.println(e);
+            }
             if (addressId == -1) {
                 return "HTTP/1.1 401 Unauthorized\r\n\r\nRegistration error";
             }
@@ -512,7 +516,7 @@ public class Server {
     }
 
     public static boolean isValidName (String name, int length) {
-        return name != null && name.length() < length && name.matches("[a-zA-Z-]+");
+        return name != null && name.length() < length && name.matches("[a-zA-Z- ]+");
     }
 
     public static boolean isValidPassword (String password) {

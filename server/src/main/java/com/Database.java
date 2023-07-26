@@ -176,27 +176,24 @@ public class Database {
      * @param address
      * @return id of the address in the database
      */
-    public static int saveRestaurantAddress (Restaurant restaurant, Address address) {
-        try {
-            // Insert into addresses table
-            PreparedStatement pstmt = conn.prepareStatement("INSERT INTO addresses (city, district, full_address) VALUES (?, ?, ?)");
-            pstmt.setString(1, address.getCity());
-            pstmt.setString(2, address.getDistrict().toLowerCase());
-            pstmt.setString(3, address.getFullAddress());
-            pstmt.executeUpdate();
+    public static int saveRestaurantAddress (Restaurant restaurant, Address address) throws SQLException {
+        // Insert into addresses table
+        PreparedStatement pstmt = conn.prepareStatement("INSERT INTO addresses (city, district, full_address) VALUES (?, ?, ?)");
+        pstmt.setString(1, address.getCity());
+        pstmt.setString(2, address.getDistrict().toLowerCase());
+        pstmt.setString(3, address.getFullAddress());
+        pstmt.executeUpdate();
 
-            // Get id of the inserted address
-            PreparedStatement pstmt2 = conn.prepareStatement("SELECT id FROM addresses WHERE city = ? AND district = ? AND full_address = ? ORDER BY id DESC LIMIT 1");
-            pstmt2.setString(1, address.getCity());
-            pstmt2.setString(2, address.getDistrict().toLowerCase());
-            pstmt2.setString(3, address.getFullAddress());
-            ResultSet rs = pstmt2.executeQuery();
+        // Get id of the inserted address
+        PreparedStatement pstmt2 = conn.prepareStatement("SELECT id FROM addresses WHERE city = ? AND district = ? AND full_address = ? ORDER BY id DESC LIMIT 1");
+        pstmt2.setString(1, address.getCity());
+        pstmt2.setString(2, address.getDistrict().toLowerCase());
+        pstmt2.setString(3, address.getFullAddress());
+        ResultSet rs = pstmt2.executeQuery();
+        if (rs.next()) {
             return rs.getInt("id");
-
-        } catch (SQLException e) {
-            System.out.println(e);
-            return -1;
         }
+        return -1;
     }
 
     /**
@@ -257,16 +254,21 @@ public class Database {
         byte[] salt = null;
         // Hash the password entered by the user in order to compare with the hash in the database
         try {
-            // Create salt
-            SecureRandom random = new SecureRandom();
-            salt = new byte[16];
-            random.nextBytes(salt);
+            // Get salt
+            PreparedStatement pstmt = conn.prepareStatement("SELECT salt FROM restaurants WHERE mail = ?");
+            pstmt.setString(1, mail);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                salt = rs.getBytes("salt");
+            }
 
             MessageDigest md = MessageDigest.getInstance("SHA-512");
             md.update(salt);
 
             hashedPassword = md.digest(password.getBytes(StandardCharsets.UTF_8));
-        } catch (NoSuchAlgorithmException e) {
+        } catch (Exception e) {
+            System.out.println();
             return false;
         }
 
@@ -282,6 +284,7 @@ public class Database {
             return false;
         }
         catch (SQLException e) {
+            System.out.println(e);
             return false;
         }
     }
@@ -448,8 +451,8 @@ public class Database {
             pstmt.setString(1, mail);
             ResultSet rs = pstmt.executeQuery();
             
-            Address address = getAddress(rs.getInt("address_id"));
             if (rs.next()) {
+                Address address = getAddress(rs.getInt("address_id"));
                 int id = rs.getInt("id");
                 ArrayList<Food> menu = getMenuOfRestaurant(id);
                 ArrayList<Order> orders = getOrdersOfRestaurant(id);
@@ -532,7 +535,7 @@ public class Database {
     public static ArrayList<Order> getOrdersOfRestaurant (int restaurantId) throws SQLException {
         ArrayList<Order> orders = new ArrayList<Order>();
 
-        PreparedStatement pstmt = conn.prepareStatement("SELECT id, user_id, restaurantName, time, price, status FROM orders WHERE restaurant_id = ?");
+        PreparedStatement pstmt = conn.prepareStatement("SELECT id, user_id, restaurant_name, time, price, status FROM orders WHERE restaurant_id = ?");
         pstmt.setInt(1, restaurantId);
         ResultSet rs = pstmt.executeQuery();
 
