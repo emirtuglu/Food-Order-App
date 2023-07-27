@@ -12,6 +12,7 @@ public class User {
     private String phoneNumber;
     private String mail;
     private String password;
+    private int selectedAddressId;
     private ArrayList<Address> addresses;
     private ArrayList<Order> orders;
     private ArrayList<Food> cart;  // Associate foods with their quantities
@@ -118,6 +119,10 @@ public class User {
     public void setPassword(String password) {
         this.password = password;
     }
+
+    public int getSelectedAddressId() { return this.selectedAddressId; }
+
+    public void setSelectedAddressId (int selectedAddressId) { this.selectedAddressId = selectedAddressId; }
 
     public ArrayList<Address> getAddresses() {
         return this.addresses;

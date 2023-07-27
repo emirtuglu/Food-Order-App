@@ -535,13 +535,14 @@ public class Database {
     public static ArrayList<Order> getOrdersOfRestaurant (int restaurantId) throws SQLException {
         ArrayList<Order> orders = new ArrayList<Order>();
 
-        PreparedStatement pstmt = conn.prepareStatement("SELECT id, user_id, restaurant_name, time, price, status FROM orders WHERE restaurant_id = ?");
+        PreparedStatement pstmt = conn.prepareStatement("SELECT id, user_id, restaurant_name, user_address_id, time, price, status FROM orders WHERE restaurant_id = ?");
         pstmt.setInt(1, restaurantId);
         ResultSet rs = pstmt.executeQuery();
 
         while (rs.next()) {
             int id = rs.getInt("id");
             int userId = rs.getInt("user_id");
+            int userAddressId = rs.getInt("user_address_id");
             String restaurantName = rs.getString("restaurant_name");
             String time = rs.getString("time");
             double price = rs.getDouble("price");
@@ -549,6 +550,11 @@ public class Database {
             ArrayList<Food> foods = getFoodsOfOrder(id);
 
             Order order = new Order(id, restaurantId, userId, restaurantName, time, price, status, foods);
+            User user = Database.getUser(userId);
+            Address address = Database.getAddress(userAddressId);
+            user.getAddresses().clear();
+            user.getAddresses().add(address);
+            order.setUser(user);
             orders.add(order);
         }
         return orders;
@@ -621,13 +627,14 @@ public class Database {
         order.setTime(dtf.format(now));
 
         // Save order
-        PreparedStatement pstmt = conn.prepareStatement("INSERT INTO orders (restaurant_id, user_id, restaurant_name, time, price, status) VALUES (?, ?, ?, ?, ?, ?)");
+        PreparedStatement pstmt = conn.prepareStatement("INSERT INTO orders (restaurant_id, user_id, user_address_id, restaurant_name, time, price, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
         pstmt.setInt(1, order.getRestaurantId());
         pstmt.setInt(2, order.getUserId());
-        pstmt.setString(3, order.getRestaurantName());
-        pstmt.setString(4, dtf.format(now));
-        pstmt.setDouble(5, order.getPrice());
-        pstmt.setString(6, order.getStatus().toString());
+        pstmt.setInt(3, order.getUserAddressId());
+        pstmt.setString(4, order.getRestaurantName());
+        pstmt.setString(5, dtf.format(now));
+        pstmt.setDouble(6, order.getPrice());
+        pstmt.setString(7, order.getStatus().toString());
         pstmt.executeUpdate();
 
         // Get id of order
@@ -769,11 +776,12 @@ public class Database {
      */
     public static boolean saveFood (Food food) {
         try {
-            PreparedStatement pstmt = conn.prepareStatement("INSERT INTO foods (restaurant_id, name, price, enabled) VALUES (?, ?, ?, ?)");
+            PreparedStatement pstmt = conn.prepareStatement("INSERT INTO foods (restaurant_id, name, description, price, enabled) VALUES (?, ?, ?, ?, ?)");
             pstmt.setInt(1, food.getRestaurantId());
             pstmt.setString(2, food.getName());
-            pstmt.setDouble(3, food.getPrice());
-            pstmt.setBoolean(4, food.isEnabled());
+            pstmt.setString(3, food.getDescription());
+            pstmt.setDouble(4, food.getPrice());
+            pstmt.setBoolean(5, food.isEnabled());
             pstmt.executeUpdate();
             return true;
         } catch (SQLException e) {

@@ -28,10 +28,12 @@ public class PrimaryController {
 
         String email = emailField.getText();
         String password = passwordField.getText();
-        Restaurant restaurant = new Restaurant(email, password);
-        String restaurantJson = gson.toJson(restaurant, Restaurant.class);
+        Restaurant enteredRestaurant = new Restaurant(email, password);
+        String restaurantJson = gson.toJson(enteredRestaurant, Restaurant.class);
         String request = RequestManager.requestBuild("POST", "/restaurant-login", null, null, restaurantJson);
         String response = RequestManager.sendRequest(request);
+        Restaurant restaurant = gson.fromJson(RequestManager.getBody(response), Restaurant.class);
+        DashboardController.setRestaurant(restaurant);
         
         if (response.contains("200 OK")) {
             try {

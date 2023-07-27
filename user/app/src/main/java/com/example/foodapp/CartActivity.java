@@ -55,6 +55,7 @@ public class CartActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Order order = new Order(cart.get(0).getRestaurantId(), user.getId(), cart.get(0).getRestaurantName(), user.getTotalPriceOfCart(), cart);
+                order.setUserAddressId(user.getSelectedAddressId());
                 RequestManager requestManager = new RequestManager();
                 String request = RequestManager.requestBuild("POST", "/send-order", null, null, gson.toJson(order, Order.class));
                 String response = null;

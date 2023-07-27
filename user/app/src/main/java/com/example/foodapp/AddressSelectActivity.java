@@ -146,6 +146,7 @@ public class AddressSelectActivity extends AppCompatActivity {
                 else {
                     // Move to new activity and display restaurants
                     Intent restaurantSelectActivityIntent = new Intent(view.getContext(), RestaurantSelectActivity.class);
+                    user.setSelectedAddressId(clickedAddress.getId());
                     restaurantSelectActivityIntent.putExtra("address", addressJson);
                     restaurantSelectActivityIntent.putExtra("user", gson.toJson(user, User.class));
                     startActivity(restaurantSelectActivityIntent);

@@ -12,6 +12,8 @@ public class Order {
     private int id;
     private int restaurantId;
     private int userId;
+    private int userAddressId;
+    private User user;
     private String restaurantName;
     private String time;
     private double price;
@@ -39,6 +41,18 @@ public class Order {
     public void setId(int id) {
         this.id = id;
     }
+
+    public User getUser() {
+        return this.user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public int getUserAddressId() { return this.userAddressId; }
+
+    public void setUserAddressId (int userAddressId) { this.userAddressId = userAddressId; }
 
     public int getRestaurantId() {
         return this.restaurantId;

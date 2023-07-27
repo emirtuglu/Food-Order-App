@@ -2,15 +2,14 @@ package com.example;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 
-/**
- * JavaFX App
- */
 public class App extends Application {
 
     private static Scene scene;
@@ -32,7 +31,16 @@ public class App extends Application {
     }
 
     static void startDashboard() throws IOException {
-        
+        Screen screen = Screen.getPrimary();
+        Rectangle2D bounds = screen.getBounds();
+
+        Parent dashboard = loadFXML("dashboard");
+        Scene dashBoardScene = new Scene(dashboard, bounds.getWidth(), bounds.getHeight());
+        dashBoardScene.setRoot(dashboard);
+        Stage stage = (Stage) scene.getWindow();
+        stage.setScene(dashBoardScene);
+        stage.setX(0);
+        stage.setY(0);
     }
 
     public static void main(String[] args) {

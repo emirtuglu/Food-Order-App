@@ -9,15 +9,32 @@ enum Status {
 
 public class Order {
     private int id;
-    private int restaurantId;
-    private int userId;
-    private String restaurantName;
+    private User user;
     private String time;
     private double price;
     private Status status;
     private ArrayList<Food> foods;
 
     public Order() {
+    }
+
+    public String getStatusExplanation() {
+        if (this.status == Status.ACTIVE) {
+            return "Active";
+        }
+        else if (this.status == Status.COMPLETED) {
+            return "Completed";
+        }
+        else if (this.status == Status.RESTAURANT_CANCELLED) {
+            return "Cancelled by you";
+        }
+        else if (this.status == Status.USER_CANCELLED) {
+            return "Cancelled by user";
+        }
+        else if (this.status == Status.USER_REQUESTED_CANCEL) {
+            return "User requested cancellation";
+        }
+        return "";
     }
 
     public int getId() {
@@ -28,28 +45,12 @@ public class Order {
         this.id = id;
     }
 
-    public int getRestaurantId() {
-        return this.restaurantId;
+    public User getUser() {
+        return this.user;
     }
 
-    public void setRestaurantId(int restaurantId) {
-        this.restaurantId = restaurantId;
-    }
-
-    public int getUserId() {
-        return this.userId;
-    }
-
-    public void setUserId(int userId) {
-        this.userId = userId;
-    }
-
-    public String getRestaurantName() {
-        return this.restaurantName;
-    }
-
-    public void setRestaurantName( String restaurantName) {
-        this.restaurantName = restaurantName;
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public String getTime() {
@@ -82,17 +83,6 @@ public class Order {
 
     public void setFoods(ArrayList<Food> foods) {
         this.foods = foods;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == this)
-            return true;
-        if (!(o instanceof Order)) {
-            return false;
-        }
-        Order order = (Order) o;
-        return id == order.id && restaurantId == order.restaurantId && userId == order.userId && Objects.equals(time, order.time) && price == order.price && Objects.equals(status, order.status) && Objects.equals(foods, order.foods);
     }
 }
 
