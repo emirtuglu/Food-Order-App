@@ -1,11 +1,12 @@
 package com;
+
 import java.util.Objects;
 
 public class Food {
     private int id;
     private int restaurantId;
-    private String name;
     private String restaurantName;
+    private String name;
     private String description;
     private int quantity;
     private double price;
@@ -15,22 +16,12 @@ public class Food {
     public Food() {
     }
 
-    public Food(int id, int restaurantId, String name, String restaurantName, String description, double price, boolean enabled) {
+    public Food(int id, int restaurantId, String restaurantName, String name, String description, double price, boolean enabled) {
         this.id = id;
         this.restaurantId = restaurantId;
-        this.name = name;
         this.restaurantName = restaurantName;
-        this.description = description;
-        this.price = price;
-        this.enabled = enabled;
-    }
-
-    public Food(int id, int restaurantId, String name, String description, int quantity, double price, boolean enabled) {
-        this.id = id;
-        this.restaurantId = restaurantId;
         this.name = name;
         this.description = description;
-        this.quantity = quantity;
         this.price = price;
         this.enabled = enabled;
     }
@@ -51,16 +42,16 @@ public class Food {
         this.restaurantId = restaurantId;
     }
 
-    public String getName() {
-        return this.name;
-    }
-
     public String getRestaurantName() { 
         return this.restaurantName; 
     }
 
     public void setRestaurantName(String restaurantName) { 
         this.restaurantName = restaurantName; 
+    }
+
+    public String getName() {
+        return this.name;
     }
 
     public void setName(String name) {
@@ -71,7 +62,7 @@ public class Food {
         return this.description;
     }
 
-    public void setDescription( String description) {
+    public void setDescription(String description) {
         this.description = description;
     }
 
@@ -79,7 +70,7 @@ public class Food {
         return this.quantity;
     }
 
-    public void setQuantity (int quantity) {
+    public void setQuantity(int quantity) {
         this.quantity = quantity;
     }
 
@@ -95,6 +86,10 @@ public class Food {
         return this.enabled;
     }
 
+    public boolean getEnabled() {
+        return this.enabled;
+    }
+
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
@@ -107,7 +102,7 @@ public class Food {
             return false;
         }
         Food food = (Food) o;
-        return id == food.id && restaurantId == food.restaurantId && Objects.equals(name, food.name) && price == food.price && enabled == food.enabled;
+        return id == food.id && restaurantId == food.restaurantId && Objects.equals(name, food.name) && Objects.equals(description, food.description) && quantity == food.quantity && price == food.price && enabled == food.enabled;
     }
 
     @Override
@@ -116,9 +111,12 @@ public class Food {
             " id='" + getId() + "'" +
             ", restaurantId='" + getRestaurantId() + "'" +
             ", name='" + getName() + "'" +
+            ", description='" + getDescription() + "'" +
+            ", quantity='" + getQuantity() + "'" +
             ", price='" + getPrice() + "'" +
             ", enabled='" + isEnabled() + "'" +
             "}";
-    }    
+    }
+    
 }
 

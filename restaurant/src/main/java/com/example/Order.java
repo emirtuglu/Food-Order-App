@@ -9,13 +9,33 @@ enum Status {
 
 public class Order {
     private int id;
-    private User user;
+    private int userId;
+    private int restaurantId;
+    private String restaurantName;
+    private Address userAddress;
+    private String userFullName;
+    private String userPhoneNumber;
     private String time;
     private double price;
     private Status status;
     private ArrayList<Food> foods;
 
+
     public Order() {
+    }
+
+    public Order(int id, int userId, int restaurantId, String restaurantName, Address userAddress, String userFullName, String userPhoneNumber, String time, double price, Status status, ArrayList<Food> foods) {
+        this.id = id;
+        this.userId = userId;
+        this.restaurantId = restaurantId;
+        this.restaurantName = restaurantName;
+        this.userAddress = userAddress;
+        this.userFullName = userFullName;
+        this.userPhoneNumber = userPhoneNumber;
+        this.time = time;
+        this.price = price;
+        this.status = status;
+        this.foods = foods;
     }
 
     public String getStatusExplanation() {
@@ -45,12 +65,52 @@ public class Order {
         this.id = id;
     }
 
-    public User getUser() {
-        return this.user;
+    public int getUserId() {
+        return this.userId;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setUserId(int userId) {
+        this.userId = userId;
+    }
+
+    public int getRestaurantId() {
+        return this.restaurantId;
+    }
+
+    public void setRestaurantId(int restaurantId) {
+        this.restaurantId = restaurantId;
+    }
+
+    public String getRestaurantName() {
+        return this.restaurantName;
+    }
+
+    public void setRestaurantName (String restaurantName) {
+        this.restaurantName = restaurantName;
+    }
+
+    public Address getUserAddress() {
+        return this.userAddress;
+    }
+
+    public void setUserAddress (Address userAddress) {
+        this.userAddress = userAddress;
+    }
+
+    public String getUserFullName() {
+        return this.userFullName;
+    }
+
+    public void setUserFullName(String userFullName) {
+        this.userFullName = userFullName;
+    }
+
+    public String getUserPhoneNumber() {
+        return this.userPhoneNumber;
+    }
+
+    public void setUserPhoneNumber(String userPhoneNumber) {
+        this.userPhoneNumber = userPhoneNumber;
     }
 
     public String getTime() {
@@ -84,6 +144,34 @@ public class Order {
     public void setFoods(ArrayList<Food> foods) {
         this.foods = foods;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this)
+            return true;
+        if (!(o instanceof Order)) {
+            return false;
+        }
+        Order order = (Order) o;
+        return id == order.id && userId == order.userId && restaurantId == order.restaurantId && userAddress == order.userAddress && Objects.equals(userFullName, order.userFullName) && Objects.equals(userPhoneNumber, order.userPhoneNumber) && Objects.equals(time, order.time) && price == order.price && Objects.equals(status, order.status) && Objects.equals(foods, order.foods);
+    }
+
+    @Override
+    public String toString() {
+        return "{" +
+            " id='" + getId() + "'" +
+            ", userId='" + getUserId() + "'" +
+            ", restaurantId='" + getRestaurantId() + "'" +
+            ", userAddressId='" + getUserAddress() + "'" +
+            ", userFullName='" + getUserFullName() + "'" +
+            ", userPhoneNumber='" + getUserPhoneNumber() + "'" +
+            ", time='" + getTime() + "'" +
+            ", price='" + getPrice() + "'" +
+            ", status='" + getStatus() + "'" +
+            ", foods='" + getFoods() + "'" +
+            "}";
+    }
+    
 }
 
 

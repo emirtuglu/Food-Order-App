@@ -2,7 +2,6 @@ package com.example.foodapp;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Objects;
 
 public class User {
@@ -12,24 +11,13 @@ public class User {
     private String phoneNumber;
     private String mail;
     private String password;
-    private int selectedAddressId;
+    private Address selectedAddress;
     private ArrayList<Address> addresses;
     private ArrayList<Order> orders;
     private ArrayList<Food> cart;  // Associate foods with their quantities
 
 
     public User() {
-    }
-
-    public User(int id, String name, String surname, String phoneNumber, String mail, ArrayList<Address> addresses, ArrayList<Order> orders, ArrayList<Food> cart) {
-        this.id = id;
-        this.name = name;
-        this.surname = surname;
-        this.phoneNumber = phoneNumber;
-        this.mail = mail;
-        this.addresses = addresses;
-        this.orders = orders;
-        this.cart = cart;
     }
 
     public User(String name, String surname, String phoneNumber, String mail, String password) {
@@ -70,6 +58,10 @@ public class User {
         orders.sort(Comparator.comparing(Order::getTime, Comparator.reverseOrder()));
 
         return orders.get(0);
+    }
+
+    public String getFullName() {
+        return this.name + " " + this.surname;
     }
 
     public int getId() {
@@ -120,9 +112,13 @@ public class User {
         this.password = password;
     }
 
-    public int getSelectedAddressId() { return this.selectedAddressId; }
+    public Address getSelectedAddress() {
+        return this.selectedAddress;
+    }
 
-    public void setSelectedAddressId (int selectedAddressId) { this.selectedAddressId = selectedAddressId; }
+    public void setSelectedAddress(Address address) {
+        this.selectedAddress = address;
+    }
 
     public ArrayList<Address> getAddresses() {
         return this.addresses;
@@ -175,4 +171,3 @@ public class User {
     }
 
 }
-

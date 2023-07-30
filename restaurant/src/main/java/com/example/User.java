@@ -1,8 +1,6 @@
 package com.example;
 
 import java.util.ArrayList;
-import java.util.Objects;
-
 
 public class User {
     private int id;

@@ -36,12 +36,20 @@
             <VBox alignment="CENTER" >
                 <Label text="Menu" style="-fx-font-size: 26px;"/>
                 <ListView fx:id="menuListView" prefWidth="200" prefHeight="550" focusTraversable="false"/>
-                <Button fx:id="newFoodButton" text="New Food" style="-fx-font-size: 20px;" prefHeight="50" />
+                <Button fx:id="newFoodButton" text="Add Food" style="-fx-font-size: 20px;" prefHeight="50" />
             </VBox>
 
             <!-- Right side - Orders List -->
             <VBox alignment="CENTER">
                 <Label text="Orders" style="-fx-font-size: 26px;"/>
+                <HBox spacing="10">
+                    <padding>
+                        <Insets left="10.0"  />
+                    </padding>
+                    <RadioButton text="All Orders" fx:id="allOrdersButton" />
+                    <RadioButton text="Active Orders" fx:id="activeOrdersButton" />
+                    <RadioButton text="Past Orders" fx:id="pastOrdersButton" />
+                </HBox>
                 <ListView fx:id="ordersListView" prefWidth="200" prefHeight="600" focusTraversable="false"/>
             </VBox>
     </SplitPane>

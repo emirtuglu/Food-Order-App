@@ -41,10 +41,10 @@ public class AddressAddActivity extends AppCompatActivity {
                 try {
                     response = requestManager.execute(request).get();
                 } catch (Exception e) {
-
+                    Toast.makeText(view.getContext(), "Connection error", Toast.LENGTH_LONG).show();
                 }
 
-                if (response.contains("201 Created")) {
+                if (response != null && response.contains("201 Created")) {
                     Toast.makeText(view.getContext(), "Address added successfully", Toast.LENGTH_LONG).show();
                     user.getAddresses().add(address);
                     String userJson = gson.toJson(user, User.class);

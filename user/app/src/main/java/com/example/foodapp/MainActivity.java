@@ -42,20 +42,21 @@ public class MainActivity extends AppCompatActivity {
                 String response = null;
                 try {
                     response = requestManager.execute(request).get();
-                } catch (Exception e) {
 
+                    if (response != null && response.contains("200 OK")) {
+                        String body = RequestManager.getBody(response);
+                        Intent addressActivityIntent = new Intent(view.getContext(), AddressSelectActivity.class);
+                        addressActivityIntent.putExtra("user", body);
+                        startActivity(addressActivityIntent);
+                    }
+                    else {
+                        Toast.makeText(view.getContext(), RequestManager.getBody(response), Toast.LENGTH_LONG).show();
+                        mail.getText().clear();
+                        password.getText().clear();
+                    }
                 }
-
-                if (response.contains("200 OK")) {
-                    String body = RequestManager.getBody(response);
-                    Intent addressActivityIntent = new Intent(view.getContext(), AddressSelectActivity.class);
-                    addressActivityIntent.putExtra("user", body);
-                    startActivity(addressActivityIntent);
-                }
-                else {
-                    Toast.makeText(view.getContext(), RequestManager.getBody(response), Toast.LENGTH_LONG).show();
-                    mail.getText().clear();
-                    password.getText().clear();
+                catch (Exception e) {
+                    Toast.makeText(view.getContext(), "Connection error", Toast.LENGTH_LONG).show();
                 }
             }
         });

@@ -29,6 +29,16 @@ public class Restaurant {
         this.password = password;
     }
 
+    public ArrayList<Order> getOrdersInStatus (Status status) {
+        ArrayList<Order> result = new ArrayList<Order>();
+        for (Order order : this.orders) {
+            if (order.getStatus() == status) {
+                result.add(order);
+            }
+        }
+        return result;
+    }
+
     public int getId() {
         return this.id;
     }

@@ -9,9 +9,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -42,8 +40,6 @@ public class Server {
             OutputStreamWriter osw = new OutputStreamWriter(clientSocket.getOutputStream());
             BufferedReader bufferedReader = new BufferedReader(isr);
             BufferedWriter bufferedWriter = new BufferedWriter(osw);
-
-            System.out.println("someone connected");
 
             // Read the client request
             StringBuilder requestBuilder = new StringBuilder();
@@ -188,7 +184,7 @@ public class Server {
                 String json = gson.toJson(user, User.class);
 
                 String response = "HTTP/1.1 200 OK\r\n"
-                + "Content-type: application/json\r\n"
+                + "Content-Type: application/json\r\n"
                 + "Content-Length: " + json.length()
                 +"\r\n"
                 + json;
@@ -216,7 +212,7 @@ public class Server {
                 String json = gson.toJson(restaurant, Restaurant.class);
 
                 String response = "HTTP/1.1 200 OK\r\n"
-                + "Content-type: application/json\r\n"
+                + "Content-Type: application/json\r\n"
                 + "Content-Length: " + json.length()
                 +"\r\n"
                 + json;
@@ -248,7 +244,7 @@ public class Server {
                 String json = gson.toJson(restaurants, new TypeToken<List<Restaurant>>(){}.getType());
 
                 String response = "HTTP/1.1 200 OK\r\n"
-                    + "Content-type: application/json\r\n"
+                    + "Content-Type: application/json\r\n"
                     + "Content-Length: " + json.length()
                     +"\r\n"
                     + json;
@@ -349,7 +345,7 @@ public class Server {
                 String json = gson.toJson(orders, new TypeToken<List<Order>>(){}.getType());
 
                 String response = "HTTP/1.1 200 OK\r\n"
-                + "Content-type: application/json\r\n"
+                + "Content-Type: application/json\r\n"
                 +"\r\n"
                 + json;
                 return response;
@@ -421,6 +417,7 @@ public class Server {
             Order order = gson.fromJson(body, Order.class);
             try {
                 Database.updateStatusOfOrder(order);
+                return "HTTP/1.1 200 OK\r\n\r\nOrder updated";
             } catch (SQLException e) {
                 System.out.println(e);
                 return "HTTP/1.1 401 Unauthorized\r\n\r\nCouldn't update order";
@@ -431,7 +428,7 @@ public class Server {
         if (method.equals("POST") && path.equals("/update-food")) {
             Food food = gson.fromJson(body, Food.class);
             try {
-                Database.updateStatusOfFood(food);
+                Database.updateFood(food);
             } catch (SQLException e) {
                 System.out.println(e);
                 return "HTTP/1.1 401 Unauthorized\r\n\r\nCouldn't update food";
@@ -504,7 +501,7 @@ public class Server {
         if (method.equals("POST") && path.equals("/delete-food")) {
             Food food = gson.fromJson(body, Food.class);
             
-            if (Database.deleteFood(food)) {
+            if (Database.deleteFoodFromMenu(food)) {
                 return "HTTP/1.1 200 OK\r\n\r\nFood successfully deleted";
             }
             else {
@@ -516,7 +513,7 @@ public class Server {
     }
 
     public static boolean isValidName (String name, int length) {
-        return name != null && name.length() < length && name.matches("[a-zA-Z- ]+");
+        return name != null && name.length() < length && name.matches("[0-9a-zA-Z- ]+");
     }
 
     public static boolean isValidPassword (String password) {
@@ -546,7 +543,7 @@ public class Server {
 
         return city != null && city.length() > 1 && city.length() < 30 &&
             district != null && district.length() > 1 && district.length() < 30 &&
-            fullAddress != null && fullAddress.length() > 9 && fullAddress.length() < 256;
+            fullAddress != null && fullAddress.length() > 4 && fullAddress.length() < 256;
     }
 
     public static boolean isValidParameter (String parameter) {

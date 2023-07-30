@@ -60,7 +60,6 @@ public class AddressSelectActivity extends AppCompatActivity {
                 startActivityForResult(addressAddActivityIntent, 1);
             }
         });
-
     }
 
     @Override
@@ -70,15 +69,12 @@ public class AddressSelectActivity extends AppCompatActivity {
 
         // Get added address
         if (requestCode == 1) {
-            if(resultCode == Activity.RESULT_OK){
+            if (resultCode == Activity.RESULT_OK) {
                 String userJson = data.getStringExtra("user");
                 user = gson.fromJson(userJson, User.class);
                 addressList.clear();
                 addressList.addAll(user.getAddresses());
                 addressAdapter.notifyDataSetChanged();
-            }
-            if (resultCode == Activity.RESULT_CANCELED) {
-                // Write your code if there's no result
             }
         }
     }
@@ -124,10 +120,12 @@ public class AddressSelectActivity extends AppCompatActivity {
                                     String response = null;
                                     try {
                                         response = requestManager.execute(request).get();
+                                        Toast.makeText(view.getContext(), RequestManager.getBody(response), Toast.LENGTH_SHORT).show();
                                     } catch (Exception e) {
+                                        Toast.makeText(view.getContext(), "Connection error", Toast.LENGTH_LONG).show();
                                     }
-                                    Toast.makeText(view.getContext(), RequestManager.getBody(response), Toast.LENGTH_SHORT).show();
-                                    if (response.contains("200 OK")) {
+
+                                    if (response != null && response.contains("200 OK")) {
                                         addressList.remove(clickedAddress);
                                         addressAdapter.notifyDataSetChanged();
                                     }
@@ -146,7 +144,7 @@ public class AddressSelectActivity extends AppCompatActivity {
                 else {
                     // Move to new activity and display restaurants
                     Intent restaurantSelectActivityIntent = new Intent(view.getContext(), RestaurantSelectActivity.class);
-                    user.setSelectedAddressId(clickedAddress.getId());
+                    user.setSelectedAddress(clickedAddress);
                     restaurantSelectActivityIntent.putExtra("address", addressJson);
                     restaurantSelectActivityIntent.putExtra("user", gson.toJson(user, User.class));
                     startActivity(restaurantSelectActivityIntent);

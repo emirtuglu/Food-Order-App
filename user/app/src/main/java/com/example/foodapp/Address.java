@@ -12,6 +12,12 @@ public class Address {
     public Address() {
     }
 
+    public Address(String city, String district, String fullAddress) {
+        this.city = city;
+        this.district = district;
+        this.fullAddress = fullAddress;
+    }
+
     public Address(String title, String city, String district, String fullAddress) {
         this.title = title;
         this.city = city;
@@ -69,5 +75,14 @@ public class Address {
         Address address = (Address) o;
         return id == address.id && Objects.equals(city, address.city) && Objects.equals(district, address.district) && Objects.equals(fullAddress, address.fullAddress);
     }
-}
 
+    @Override
+    public String toString() {
+        return "{" +
+                " id='" + getId() + "'" +
+                ", city='" + getCity() + "'" +
+                ", district='" + getDistrict() + "'" +
+                ", fullAddress='" + getFullAddress() + "'" +
+                "}";
+    }
+}

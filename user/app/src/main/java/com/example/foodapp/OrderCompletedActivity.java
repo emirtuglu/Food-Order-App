@@ -17,8 +17,6 @@ public class OrderCompletedActivity extends AppCompatActivity {
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                /*Intent restaurantSelectActivityIntent = new Intent(view.getContext(), RestaurantSelectActivity.class);
-                startActivity(restaurantSelectActivityIntent);*/
                 finish();
             }
         });

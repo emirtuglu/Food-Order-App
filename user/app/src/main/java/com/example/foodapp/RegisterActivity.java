@@ -35,21 +35,25 @@ public class RegisterActivity extends AppCompatActivity {
                 String response = null;
                 try {
                     response = requestManager.execute(request).get();
-                } catch (Exception e) {
+
+                    if (response != null && response.contains("201 Created")) {
+                        Toast.makeText(view.getContext(), "Registration successful", Toast.LENGTH_SHORT).show();
+                        finish();
+                    }
+                    else {
+                        Toast.makeText(view.getContext(), RequestManager.getBody(response), Toast.LENGTH_LONG).show();
+                        name.getText().clear();
+                        surname.getText().clear();
+                        mail.getText().clear();
+                        password.getText().clear();
+                        phoneNumber.getText().clear();
+                    }
 
                 }
-                if (response.contains("201 Created")) {
-                    Toast.makeText(view.getContext(), "Registration successful", Toast.LENGTH_SHORT).show();
-                    finish();
+                catch (Exception e) {
+                    Toast.makeText(view.getContext(), "Connection error", Toast.LENGTH_LONG).show();
                 }
-                else {
-                    Toast.makeText(view.getContext(), RequestManager.getBody(response), Toast.LENGTH_LONG).show();
-                    name.getText().clear();
-                    surname.getText().clear();
-                    mail.getText().clear();
-                    password.getText().clear();
-                    phoneNumber.getText().clear();
-                }
+
             }
         });
     }

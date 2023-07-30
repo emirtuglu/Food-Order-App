@@ -38,7 +38,6 @@ public class CartActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cart);
 
-        RequestManager requestManager = new RequestManager();
         gson = new Gson();
 
         String userJson = getIntent().getStringExtra("user");
@@ -54,25 +53,26 @@ public class CartActivity extends AppCompatActivity {
         checkoutButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Order order = new Order(cart.get(0).getRestaurantId(), user.getId(), cart.get(0).getRestaurantName(), user.getTotalPriceOfCart(), cart);
-                order.setUserAddressId(user.getSelectedAddressId());
+                Order order = new Order(user.getId(), cart.get(0).getRestaurantId(), cart.get(0).getRestaurantName(), user.getSelectedAddress(), user.getFullName(), user.getPhoneNumber(), user.getTotalPriceOfCart(), cart);
                 RequestManager requestManager = new RequestManager();
                 String request = RequestManager.requestBuild("POST", "/send-order", null, null, gson.toJson(order, Order.class));
                 String response = null;
                 try {
                     response = requestManager.execute(request).get();
-                } catch (Exception e) {
 
-                }
-                if (response.contains("200 OK")) {
-                    user.setCart(new ArrayList<Food>());
-                    cart.clear();
-                    foodsAdapter.notifyDataSetChanged();
-                    Intent orderCompletedActivityIntent = new Intent(view.getContext(), OrderCompletedActivity.class);
-                    startActivity(orderCompletedActivityIntent);
-                }
-                else {
-                    Toast.makeText(view.getContext(), RequestManager.getBody(response), Toast.LENGTH_SHORT).show();
+                    if (response != null && response.contains("200 OK")) {
+                        user.setCart(new ArrayList<Food>());
+                        cart.clear();
+                        foodsAdapter.notifyDataSetChanged();
+                        Intent orderCompletedActivityIntent = new Intent(view.getContext(), OrderCompletedActivity.class);
+                        startActivity(orderCompletedActivityIntent);
+                    }
+                    else {
+                        Toast.makeText(view.getContext(), RequestManager.getBody(response), Toast.LENGTH_SHORT).show();
+                    }
+
+                } catch (Exception e) {
+                    Toast.makeText(view.getContext(), "Connection error", Toast.LENGTH_LONG).show();
                 }
             }
         });
@@ -94,22 +94,21 @@ public class CartActivity extends AppCompatActivity {
         try {
             response = requestManager.execute(request).get();
         } catch (Exception e) {
-
         }
         String cartJson = RequestManager.getBody(response);
         if (cartJson.length() > 3) {
             user.setCart(gson.fromJson(cartJson, new TypeToken<List<Food>>(){}.getType()));
             restaurantName.setText(user.getCart().get(0).getRestaurantName());
-            restaurantImage.setVisibility(0);
-            totalPrice.setVisibility(0);
+            restaurantImage.setVisibility(View.VISIBLE);
+            totalPrice.setVisibility(View.VISIBLE);
             totalPrice.setText("Total Price: ₺" + user.getTotalPriceOfCart());
-            checkoutButton.setVisibility(0);
+            checkoutButton.setVisibility(View.VISIBLE);
         }
         else { // Cart is empty
             restaurantName.setText("Your cart is empty");
-            restaurantImage.setVisibility(4);
-            totalPrice.setVisibility(4);
-            checkoutButton.setVisibility(4);
+            restaurantImage.setVisibility(View.INVISIBLE);
+            totalPrice.setVisibility(View.INVISIBLE);
+            checkoutButton.setVisibility(View.INVISIBLE);
             user.setCart(new ArrayList<Food>());
         }
         cart.clear();
@@ -144,7 +143,7 @@ public class CartActivity extends AppCompatActivity {
 
             public void bind(Food food) {
                 foodName.setText(food.getName());
-                foodPrice.setText("₺" + String.valueOf(food.getPrice() * food.getQuantity()));
+                foodPrice.setText("₺" + String.format("%.2f", food.getPrice() * food.getQuantity()));
                 quantity.setText(String.valueOf(food.getQuantity()));
 
             }
@@ -189,16 +188,16 @@ public class CartActivity extends AppCompatActivity {
                 cart.addAll(user.getCart());
                 if (cart.isEmpty()) {
                     restaurantName.setText("Your cart is empty");
-                    restaurantImage.setVisibility(4);
-                    totalPrice.setVisibility(4);
-                    checkoutButton.setVisibility(4);
+                    restaurantImage.setVisibility(View.INVISIBLE);
+                    totalPrice.setVisibility(View.INVISIBLE);
+                    checkoutButton.setVisibility(View.INVISIBLE);
                 }
                 else {
                     restaurantName.setText(user.getCart().get(0).getRestaurantName());
-                    restaurantImage.setVisibility(0);
-                    totalPrice.setVisibility(0);
+                    restaurantImage.setVisibility(View.VISIBLE);
+                    totalPrice.setVisibility(View.VISIBLE);
                     totalPrice.setText("Total Price: ₺" + user.getTotalPriceOfCart());
-                    checkoutButton.setVisibility(0);
+                    checkoutButton.setVisibility(View.VISIBLE);
                 }
                 totalPrice.setText("Total Price: ₺" + user.getTotalPriceOfCart());
                 Toast.makeText(view.getContext(), RequestManager.getBody(response), Toast.LENGTH_SHORT).show();

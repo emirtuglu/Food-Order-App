@@ -33,7 +33,6 @@ public class RestaurantSelectActivity extends AppCompatActivity {
     private Address address;
     private TextView lastOrderText;
     private TextView seeAllText;
-
     private Handler handler;
     private Runnable runnable;
     private Gson gson;
@@ -139,8 +138,8 @@ public class RestaurantSelectActivity extends AppCompatActivity {
                 String ordersJson = RequestManager.getBody(response);
 
                 // Check if any orders are cancelled
-                user.getOrders().sort(Comparator.comparing(Order::getTime, Comparator.reverseOrder()));
                 ArrayList<Order> updatedOrders = gson.fromJson(ordersJson, new TypeToken<List<Order>>(){}.getType());
+                user.getOrders().sort(Comparator.comparing(Order::getTime, Comparator.reverseOrder()));
                 updatedOrders.sort(Comparator.comparing(Order::getTime, Comparator.reverseOrder()));
                 if (user.getOrders().size() > 0 && user.getOrders().size() == updatedOrders.size() && !user.getOrders().equals(updatedOrders)) {
                     // Status of an order is changed

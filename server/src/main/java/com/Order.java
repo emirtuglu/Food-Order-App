@@ -2,7 +2,6 @@ package com;
 
 import java.util.Objects;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 enum Status {
     ACTIVE, COMPLETED, USER_REQUESTED_CANCEL, USER_CANCELLED, RESTAURANT_CANCELLED
@@ -10,24 +9,29 @@ enum Status {
 
 public class Order {
     private int id;
-    private int restaurantId;
     private int userId;
-    private int userAddressId;
-    private User user;
+    private int restaurantId;
     private String restaurantName;
+    private Address userAddress;
+    private String userFullName;
+    private String userPhoneNumber;
     private String time;
     private double price;
     private Status status;
     private ArrayList<Food> foods;
 
+
     public Order() {
     }
 
-    public Order(int id, int restaurantId, int userId, String restaurantName, String time, double price, Status status, ArrayList<Food> foods) {
+    public Order(int id, int userId, int restaurantId, String restaurantName, Address userAddress, String userFullName, String userPhoneNumber, String time, double price, Status status, ArrayList<Food> foods) {
         this.id = id;
-        this.restaurantId = restaurantId;
         this.userId = userId;
+        this.restaurantId = restaurantId;
         this.restaurantName = restaurantName;
+        this.userAddress = userAddress;
+        this.userFullName = userFullName;
+        this.userPhoneNumber = userPhoneNumber;
         this.time = time;
         this.price = price;
         this.status = status;
@@ -42,17 +46,13 @@ public class Order {
         this.id = id;
     }
 
-    public User getUser() {
-        return this.user;
+    public int getUserId() {
+        return this.userId;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setUserId(int userId) {
+        this.userId = userId;
     }
-
-    public int getUserAddressId() { return this.userAddressId; }
-
-    public void setUserAddressId (int userAddressId) { this.userAddressId = userAddressId; }
 
     public int getRestaurantId() {
         return this.restaurantId;
@@ -62,20 +62,36 @@ public class Order {
         this.restaurantId = restaurantId;
     }
 
-    public int getUserId() {
-        return this.userId;
-    }
-
-    public void setUserId(int userId) {
-        this.userId = userId;
-    }
-
     public String getRestaurantName() {
         return this.restaurantName;
     }
 
-    public void setRestaurantName( String restaurantName) {
+    public void setRestaurantName (String restaurantName) {
         this.restaurantName = restaurantName;
+    }
+
+    public Address getUserAddress() {
+        return this.userAddress;
+    }
+
+    public void setUserAddress(Address userAddress) {
+        this.userAddress = userAddress;
+    }
+
+    public String getUserFullName() {
+        return this.userFullName;
+    }
+
+    public void setUserFullName(String userFullName) {
+        this.userFullName = userFullName;
+    }
+
+    public String getUserPhoneNumber() {
+        return this.userPhoneNumber;
+    }
+
+    public void setUserPhoneNumber(String userPhoneNumber) {
+        this.userPhoneNumber = userPhoneNumber;
     }
 
     public String getTime() {
@@ -118,21 +134,25 @@ public class Order {
             return false;
         }
         Order order = (Order) o;
-        return id == order.id && restaurantId == order.restaurantId && userId == order.userId && Objects.equals(time, order.time) && price == order.price && Objects.equals(status, order.status) && Objects.equals(foods, order.foods);
+        return id == order.id && userId == order.userId && restaurantId == order.restaurantId && userAddress == order.userAddress && Objects.equals(userFullName, order.userFullName) && Objects.equals(userPhoneNumber, order.userPhoneNumber) && Objects.equals(time, order.time) && price == order.price && Objects.equals(status, order.status) && Objects.equals(foods, order.foods);
     }
 
     @Override
     public String toString() {
         return "{" +
             " id='" + getId() + "'" +
-            ", restaurantId='" + getRestaurantId() + "'" +
             ", userId='" + getUserId() + "'" +
+            ", restaurantId='" + getRestaurantId() + "'" +
+            ", userAddressId='" + getUserAddress() + "'" +
+            ", userFullName='" + getUserFullName() + "'" +
+            ", userPhoneNumber='" + getUserPhoneNumber() + "'" +
             ", time='" + getTime() + "'" +
             ", price='" + getPrice() + "'" +
             ", status='" + getStatus() + "'" +
             ", foods='" + getFoods() + "'" +
             "}";
     }
+    
 }
 
 
