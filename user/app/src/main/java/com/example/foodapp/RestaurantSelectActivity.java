@@ -8,6 +8,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
@@ -285,6 +287,7 @@ public class RestaurantSelectActivity extends AppCompatActivity {
         public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
             private final TextView restaurantName;
             private final TextView restaurantAddress;
+            private final ImageView imageViewRestaurant;
 
             public ViewHolder(View view) {
                 super(view);
@@ -292,6 +295,7 @@ public class RestaurantSelectActivity extends AppCompatActivity {
 
                 restaurantName = (TextView) view.findViewById(R.id.restaurantName);
                 restaurantAddress = (TextView) view.findViewById(R.id.restaurantAddress);
+                imageViewRestaurant = (ImageView) view.findViewById(R.id.imageViewRestaurant);
 
                 itemView.setOnClickListener(this);
             }
@@ -302,7 +306,7 @@ public class RestaurantSelectActivity extends AppCompatActivity {
                 Restaurant clickedRestaurant = restaurantsList.get(position);
 
                 Intent restaurantMenuIntent = new Intent (view.getContext(), RestaurantMenuActivity.class);
-                restaurantMenuIntent.putExtra("restaurant", gson.toJson(clickedRestaurant, Restaurant.class));
+                restaurantMenuIntent.putExtra("restaurantId", Integer.toString(clickedRestaurant.getId()));
                 restaurantMenuIntent.putExtra("user", gson.toJson(user, User.class));
                 startActivity(restaurantMenuIntent);
             }
@@ -310,6 +314,13 @@ public class RestaurantSelectActivity extends AppCompatActivity {
             public void bind(Restaurant restaurant) {
                 restaurantName.setText(restaurant.getName());
                 restaurantAddress.setText(restaurant.getAddress().getFullAddress());
+                if (restaurant.getImage() != null) {
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(restaurant.getImage(), 0, restaurant.getImage().length);
+                    imageViewRestaurant.setImageBitmap(bitmap);
+                }
+                else {
+                    imageViewRestaurant.setImageResource(R.drawable.default_restaurant_logo);
+                }
             }
         }
 

@@ -11,12 +11,12 @@ public class Food {
     private int quantity;
     private double price;
     private boolean enabled;
-
+    private byte[] image;
 
     public Food() {
     }
 
-    public Food(int id, int restaurantId, String restaurantName, String name, String description, double price, boolean enabled) {
+    public Food(int id, int restaurantId, String restaurantName, String name, String description, double price, boolean enabled, byte[] image) {
         this.id = id;
         this.restaurantId = restaurantId;
         this.restaurantName = restaurantName;
@@ -24,6 +24,7 @@ public class Food {
         this.description = description;
         this.price = price;
         this.enabled = enabled;
+        this.image = image;
     }
 
     public int getId() {
@@ -92,6 +93,14 @@ public class Food {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public byte[] getImage() {
+        return this.image;
+    }
+
+    public void setImage(byte[] image) {
+        this.image = image;
     }
 
     @Override

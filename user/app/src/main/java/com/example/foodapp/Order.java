@@ -4,7 +4,7 @@ import java.util.Objects;
 import java.util.ArrayList;
 
 enum Status {
-    ACTIVE, COMPLETED, USER_REQUESTED_CANCEL, USER_CANCELLED, RESTAURANT_CANCELLED
+    PENDING_APPROVAL, PREPARING, COMPLETED, USER_REQUESTED_CANCEL, USER_CANCELLED, RESTAURANT_CANCELLED
 }
 
 public class Order {
@@ -36,8 +36,11 @@ public class Order {
     }
 
     public String getStatusString() {
-        if (status == Status.ACTIVE) {
+        if (status == Status.PREPARING) {
             return "Your order is being prepared \uD83D\uDD52";
+        }
+        else if (status == Status.PENDING_APPROVAL) {
+            return "Pending restaurant approval ⏳";
         }
         else if (status == Status.COMPLETED) {
             return "Order has been delivered ✅";

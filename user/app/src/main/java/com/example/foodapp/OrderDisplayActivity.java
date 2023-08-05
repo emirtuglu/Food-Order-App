@@ -8,10 +8,13 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -22,6 +25,7 @@ import java.util.ArrayList;
 public class OrderDisplayActivity extends AppCompatActivity {
 
     private ArrayList<Food> foods;
+    private Restaurant restaurant;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,21 +36,42 @@ public class OrderDisplayActivity extends AppCompatActivity {
         String orderJson = getIntent().getStringExtra("order");
         Order order = gson.fromJson(orderJson, Order.class);
 
+        RequestManager requestManager = new RequestManager();
+        String request = RequestManager.requestBuild("GET", "/restaurant-info", "restaurantId", Integer.toString(order.getRestaurantId()), null);
+        String response = null;
+        try {
+            response = requestManager.execute(request).get();
+
+            if (response != null && response.contains("200 OK")) {
+                restaurant = gson.fromJson(RequestManager.getBody(response), Restaurant.class);
+            }
+        }
+        catch (Exception e) {
+        }
+
         TextView restaurantName = findViewById(R.id.restaurantName);
         TextView orderStatus = findViewById(R.id.orderStatus);
         TextView totalPrice = findViewById(R.id.totalPrice);
         TextView date = findViewById(R.id.date);
         TextView cancelOrder = findViewById(R.id.cancelOrderText);
+        ImageView imageViewRestaurant = findViewById(R.id.imageViewRestaurant);
 
-        restaurantName.setText(order.getRestaurantName());
+        restaurantName.setText(restaurant.getName());
         orderStatus.setText(order.getStatusString());
         totalPrice.setText("Total Price: ₺" + order.getPrice());
         date.setText("Date: " + order.getTime());
-        if (order.getStatus() == Status.ACTIVE) {
+        if (order.getStatus() == Status.PENDING_APPROVAL) {
             cancelOrder.setVisibility(View.VISIBLE);
         }
         else {
             cancelOrder.setVisibility(View.INVISIBLE);
+        }
+        if (restaurant.getImage() != null) {
+            Bitmap bitmap = BitmapFactory.decodeByteArray(restaurant.getImage(), 0, restaurant.getImage().length);
+            imageViewRestaurant.setImageBitmap(bitmap);
+        }
+        else {
+            imageViewRestaurant.setImageResource(R.drawable.default_restaurant_logo);
         }
 
         foods = new ArrayList<Food>();
@@ -79,6 +104,7 @@ public class OrderDisplayActivity extends AppCompatActivity {
                                     if (response != null && response.contains("200 OK")) {
                                         orderStatus.setText(order.getStatusString());
                                         Toast.makeText(view.getContext(), "Cancel request has been sent to the restaurant", Toast.LENGTH_SHORT).show();
+                                        cancelOrder.setVisibility(View.INVISIBLE);
                                     }
                                     else {
                                         Toast.makeText(view.getContext(), RequestManager.getBody(response), Toast.LENGTH_SHORT).show();

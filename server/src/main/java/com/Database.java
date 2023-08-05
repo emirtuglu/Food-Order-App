@@ -397,12 +397,12 @@ public class Database {
      */
     public static Food getFood (int id) {
         try {
-            PreparedStatement pstmt = conn.prepareStatement("SELECT restaurant_id, restaurant_name, name, description, price, enabled FROM foods WHERE id = ?");
+            PreparedStatement pstmt = conn.prepareStatement("SELECT restaurant_id, restaurant_name, name, description, price, enabled, image FROM foods WHERE id = ?");
             pstmt.setInt(1, id);
             ResultSet rs = pstmt.executeQuery();
             
             if (rs.next()) {
-                return new Food(id, rs.getInt("restaurant_id"), rs.getString("restaurant_name"), rs.getString("name"), rs.getString("description"), rs.getDouble("price"), rs.getBoolean("enabled"));
+                return new Food(id, rs.getInt("restaurant_id"), rs.getString("restaurant_name"), rs.getString("name"), rs.getString("description"), rs.getDouble("price"), rs.getBoolean("enabled"), rs.getBytes("image"));
             }
             return null;
 
@@ -420,7 +420,7 @@ public class Database {
      */
     public static Restaurant getRestaurant (int id) {
         try {
-            PreparedStatement pstmt = conn.prepareStatement("SELECT address_id, name, phone_number, mail FROM restaurants WHERE id = ?");
+            PreparedStatement pstmt = conn.prepareStatement("SELECT address_id, name, phone_number, mail, image FROM restaurants WHERE id = ?");
             pstmt.setInt(1, id);
             ResultSet rs = pstmt.executeQuery();
             
@@ -428,7 +428,7 @@ public class Database {
                 Address address = getAddress(rs.getInt("address_id"));
                 ArrayList<Food> menu = getMenuOfRestaurant(id);
                 ArrayList<Order> orders = getOrdersOfRestaurant(id);
-                return new Restaurant(id, address, rs.getString("name"), rs.getString("phone_number"), rs.getString("mail"), menu, orders);
+                return new Restaurant(id, address, rs.getString("name"), rs.getString("phone_number"), rs.getString("mail"), menu, orders, rs.getBytes("image"));
             }
             return null;
             
@@ -446,7 +446,7 @@ public class Database {
      */
     public static Restaurant getRestaurant (String mail) {
         try {
-            PreparedStatement pstmt = conn.prepareStatement("SELECT id, address_id, name, phone_number FROM restaurants WHERE mail = ?");
+            PreparedStatement pstmt = conn.prepareStatement("SELECT id, address_id, name, phone_number, image FROM restaurants WHERE mail = ?");
             pstmt.setString(1, mail);
             ResultSet rs = pstmt.executeQuery();
             
@@ -455,12 +455,40 @@ public class Database {
                 int id = rs.getInt("id");
                 ArrayList<Food> menu = getMenuOfRestaurant(id);
                 ArrayList<Order> orders = getOrdersOfRestaurant(id);
-                return new Restaurant(id, address, rs.getString("name"), rs.getString("phone_number"), mail, menu, orders);
+                return new Restaurant(id, address, rs.getString("name"), rs.getString("phone_number"), mail, menu, orders, rs.getBytes("image"));
             }
             return null;
             
         } catch (SQLException e) {
             System.out.println("getRestaurant error");
+            System.out.println(e);
+            return null;
+        }
+    }
+
+    /**
+     * Returns a restaurant object which posseses only contact information etc.
+     * @param id
+     * @return
+     */
+    public static Restaurant getRestaurantInfo (int id) {
+        try {
+            PreparedStatement pstmt = conn.prepareStatement("SELECT name, phone_number, mail, image FROM restaurants WHERE id = ?");
+            pstmt.setInt(1, id);
+            ResultSet rs = pstmt.executeQuery();
+            
+            if (rs.next()) {
+                Restaurant restaurant = new Restaurant();
+                restaurant.setName(rs.getString("name"));
+                restaurant.setPhoneNumber(rs.getString("phone_number"));
+                restaurant.setMail(rs.getString("mail"));
+                restaurant.setImage(rs.getBytes("image"));
+                return restaurant;
+            }
+            return null;
+            
+        } catch (SQLException e) {
+            System.out.println("getRestaurantInfo error");
             System.out.println(e);
             return null;
         }
@@ -474,7 +502,7 @@ public class Database {
     public static ArrayList<Restaurant> getRestaurantsInDistrict (Address address) throws SQLException {
         ArrayList<Restaurant> restaurants = new ArrayList<Restaurant>();
 
-        String query = "SELECT r.id, r.address_id, r.name, r.phone_number, r.mail " +
+        String query = "SELECT r.id, r.address_id, r.name, r.phone_number, r.mail, r.image " +
         "FROM restaurants r " +
         "JOIN addresses a ON r.address_id = a.id " +
         "WHERE a.district = ?";
@@ -490,7 +518,8 @@ public class Database {
             String phoneNumber = rs.getString("phone_number");
             String mail = rs.getString("mail");
             ArrayList<Food> menu = getMenuOfRestaurant(id);
-            Restaurant restaurant = new Restaurant(id, restaurantAddress, name, phoneNumber, mail, menu, null);
+            byte[] image = rs.getBytes("image");
+            Restaurant restaurant = new Restaurant(id, restaurantAddress, name, phoneNumber, mail, menu, null, image);
             restaurants.add(restaurant);
         }
         return restaurants;
@@ -504,7 +533,7 @@ public class Database {
     public static ArrayList<Food> getMenuOfRestaurant (int restaurantId) {
         ArrayList<Food> foods = new ArrayList<Food>();
         try {
-            PreparedStatement pstmt = conn.prepareStatement("SELECT id, name, restaurant_name, description, price, enabled FROM foods WHERE restaurant_id = ?");
+            PreparedStatement pstmt = conn.prepareStatement("SELECT id, name, restaurant_name, description, price, enabled, image FROM foods WHERE restaurant_id = ?");
             pstmt.setInt(1, restaurantId);
             ResultSet rs = pstmt.executeQuery();
 
@@ -515,8 +544,9 @@ public class Database {
                 String description = rs.getString("description");
                 double price = rs.getDouble("price");
                 boolean enabled = rs.getBoolean("enabled");
+                byte[] image = rs.getBytes("image");
                 
-                Food food = new Food(id, restaurantId, restaurantName, name, description, price, enabled);
+                Food food = new Food(id, restaurantId, restaurantName, name, description, price, enabled, image);
                 foods.add(food);
             }
             return foods;
@@ -621,6 +651,7 @@ public class Database {
                 int foodId = rs.getInt("food_id");
                 int quantity = rs.getInt("quantity");
                 Food food = getFood(foodId);
+                food.setImage(null);
                 food.setQuantity(quantity);
                 foods.add(food);
             }
@@ -745,13 +776,14 @@ public class Database {
      */
     public static boolean saveFood (Food food) {
         try {
-            PreparedStatement pstmt = conn.prepareStatement("INSERT INTO foods (restaurant_id, restaurant_name, name, description, price, enabled) VALUES (?, ?, ?, ?, ?, ?)");
+            PreparedStatement pstmt = conn.prepareStatement("INSERT INTO foods (restaurant_id, restaurant_name, name, description, price, enabled, image) VALUES (?, ?, ?, ?, ?, ?, ?)");
             pstmt.setInt(1, food.getRestaurantId());
             pstmt.setString(2, food.getRestaurantName());
             pstmt.setString(3, food.getName());
             pstmt.setString(4, food.getDescription());
             pstmt.setDouble(5, food.getPrice());
             pstmt.setBoolean(6, food.isEnabled());
+            pstmt.setBytes(7, food.getImage());
             pstmt.executeUpdate();
             return true;
         } catch (SQLException e) {
@@ -782,12 +814,23 @@ public class Database {
      * @param food
      */
     public static void updateFood (Food food) throws SQLException {
-        PreparedStatement pstmt = conn.prepareStatement("UPDATE foods SET name = ?, description = ?, price = ?, enabled = ? WHERE id = ?");
+        PreparedStatement pstmt = conn.prepareStatement("UPDATE foods SET name = ?, description = ?, price = ?, enabled = ?, image = ? WHERE id = ?");
         pstmt.setString(1, food.getName());
         pstmt.setString(2, food.getDescription());
         pstmt.setDouble(3, food.getPrice());
         pstmt.setBoolean(4, food.isEnabled());
-        pstmt.setInt(5, food.getId());
+        pstmt.setBytes(5, food.getImage());
+        pstmt.setInt(6, food.getId());
+        pstmt.executeUpdate();
+    }
+
+    /**
+     * Updates image of the specified restaurant
+     */
+    public static void updateRestaurantImage (Restaurant restaurant) throws SQLException {
+        PreparedStatement pstmt = conn.prepareStatement("UPDATE restaurants SET image = ? WHERE id = ?");
+        pstmt.setBytes(1, restaurant.getImage());
+        pstmt.setInt(2, restaurant.getId());
         pstmt.executeUpdate();
     }
 

@@ -51,7 +51,7 @@ public class RegisterController {
         String request = RequestManager.requestBuild("POST", "/restaurant-register", null, null, restaurantJson);
         String response = RequestManager.sendRequest(request);
 
-        if (response.contains("201 Created")) {
+        if (response != null && response.contains("201 Created")) {
             restaurantNameField.clear();
             emailField.clear();
             passwordField.clear();

@@ -11,6 +11,8 @@ import android.content.Intent;
 import android.widget.Toast;
 import com.google.gson.Gson;
 
+import java.util.ArrayList;
+
 public class MainActivity extends AppCompatActivity {
 
     @Override
@@ -46,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
                     if (response != null && response.contains("200 OK")) {
                         String body = RequestManager.getBody(response);
                         Intent addressActivityIntent = new Intent(view.getContext(), AddressSelectActivity.class);
+                        user.setCart(new ArrayList<Food>());
                         addressActivityIntent.putExtra("user", body);
                         startActivity(addressActivityIntent);
                     }

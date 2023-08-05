@@ -1,5 +1,10 @@
 package com.example;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -38,6 +43,7 @@ import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.stage.FileChooser;
 
 public class DashboardController {
     @FXML
@@ -70,11 +76,20 @@ public class DashboardController {
     
     public void initialize() {
         // Set restaurant image and name
-        Image image = new Image("file:src\\main\\resources\\com\\example\\Images\\default_restaurant_logo.png");
+        Image image;
+        if (restaurant.getImage() == null) {
+            image = new Image("file:src\\main\\resources\\com\\example\\Images\\default_restaurant_logo.png");
+        }
+        else {
+            image = new Image(new ByteArrayInputStream(restaurant.getImage()));
+        }
         restaurantImage.setImage(image);
         restaurantImage.setFitHeight(70);
         restaurantImage.setFitWidth(70);
+        restaurantImage.setOnMouseClicked(e -> handleEditRestaurantImage());
         restaurantName.setText(restaurant.getName());
+
+
         if (restaurant.getOrders() == null) {
             restaurant.setOrders(new ArrayList<Order>());
         }
@@ -149,7 +164,13 @@ public class DashboardController {
         foodBox.setSpacing(25);
         foodBox.setPadding(new Insets(10));
 
-        Image foodImage = new Image("file:src\\main\\resources\\com\\example\\Images\\default_food_picture.png");
+        Image foodImage;
+        if (food.getImage() == null) {
+            foodImage = new Image("file:src\\main\\resources\\com\\example\\Images\\default_food_picture.png");
+        }
+        else {
+            foodImage = new Image(new ByteArrayInputStream(food.getImage()));
+        }
         ImageView foodImageView = new ImageView();
         foodImageView.setFitHeight(50);
         foodImageView.setFitWidth(50);
@@ -246,8 +267,11 @@ public class DashboardController {
         priceBox.setPrefWidth(150);
         priceBox.setSpacing(20);
         Label statusLabel = new Label(order.getStatusExplanation());
-        if (order.getStatus() == Status.ACTIVE) { 
+        if (order.getStatus() == Status.PREPARING) { 
             statusLabel.setTextFill(Color.BLUE);
+        }
+        else if (order.getStatus() == Status.PENDING_APPROVAL) {
+            statusLabel.setTextFill(Color.valueOf("AABF23"));
         }
         else if (order.getStatus() == Status.USER_REQUESTED_CANCEL) {
             statusLabel.setTextFill(Color.PURPLE);
@@ -270,14 +294,14 @@ public class DashboardController {
         Label dateLabel = new Label(order.getTime());
         dateLabel.setFont(new Font("Arial", 14));
         Button completeButton = new Button();
-        completeButton.setText("Complete");
+        completeButton.setText(order.getStatus() == Status.PREPARING ? "Complete" : "Approve");
         completeButton.setPrefWidth(75);
-        completeButton.setVisible(order.getStatus() == Status.ACTIVE);
+        completeButton.setVisible(order.getStatus() == Status.PREPARING || order.getStatus() == Status.PENDING_APPROVAL);
         completeButton.setOnMouseClicked(event -> handleCompleteOrder(order));
         Button cancelButton = new Button();
         cancelButton.setText("Cancel");
         cancelButton.setPrefWidth(75);
-        cancelButton.setVisible(order.getStatus() == Status.ACTIVE || order.getStatus() == Status.USER_REQUESTED_CANCEL);
+        cancelButton.setVisible(order.getStatus() == Status.PENDING_APPROVAL || order.getStatus() == Status.PREPARING || order.getStatus() == Status.USER_REQUESTED_CANCEL);
         cancelButton.setOnMouseClicked(event -> handleCancelOrder(order));
         buttonBox.getChildren().addAll(dateLabel, completeButton, cancelButton);
 
@@ -313,12 +337,44 @@ public class DashboardController {
         descriptionField.setPrefRowCount(3);
         descriptionField.setWrapText(true);
 
+        GridPane imageGrid = new GridPane();
+        Label imageLabel = new Label("");
+        imageLabel.setVisible(false);
+        Button chooseImageButton = new Button("Choose Image");
+        chooseImageButton.setOnAction(e -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Select Image File");
+
+            FileChooser.ExtensionFilter imageFilter = new FileChooser.ExtensionFilter(
+            "Image Files", "*.png", "*.jpg", "*.jpeg");
+            fileChooser.getExtensionFilters().add(imageFilter);
+
+            File file = fileChooser.showOpenDialog(dialog.getDialogPane().getScene().getWindow());
+            if (file != null) {
+                try {
+                    RandomAccessFile f = new RandomAccessFile(file.getAbsolutePath(), "r");
+                    byte[] bytes = new byte[(int) f.length()];
+                    f.read(bytes);
+                    f.close();
+                    food.setImage(bytes);
+                    imageLabel.setVisible(true);
+                    imageLabel.setText(file.getName());
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+        imageGrid.add(chooseImageButton, 0, 0);
+        imageGrid.add(imageLabel, 2, 0);
+        imageGrid.setHgap(10);
+
         grid.add(new Label("Food Name:"), 0, 0);
         grid.add(nameField, 1, 0);
         grid.add(new Label("Description:"), 0, 1);
         grid.add(descriptionField, 1, 1);
         grid.add(new Label("Price:"), 0, 2);
         grid.add(priceField, 1, 2);
+        grid.add(imageGrid, 0, 4, 2, 1);
 
         dialog.getDialogPane().setContent(grid);
 
@@ -367,7 +423,12 @@ public class DashboardController {
     }
 
     private void handleCompleteOrder(Order order) {
-        order.setStatus(Status.COMPLETED);
+        if (order.getStatus() == Status.PENDING_APPROVAL) {
+            order.setStatus(Status.PREPARING);
+        }
+        else {
+            order.setStatus(Status.COMPLETED);
+        }
         String orderJson = gson.toJson(order, Order.class);
         String request = RequestManager.requestBuild("POST", "/update-order", null, null, orderJson);
         RequestManager.sendRequest(request);
@@ -389,11 +450,11 @@ public class DashboardController {
 
         // If user clicks yes, cancel the order
         if (result == confirmButton) {
-            if (order.getStatus() == Status.ACTIVE) {
-            order.setStatus(Status.RESTAURANT_CANCELLED);
-            }
-            else if (order.getStatus() == Status.USER_REQUESTED_CANCEL) {
+            if (order.getStatus() == Status.USER_REQUESTED_CANCEL) {
                 order.setStatus(Status.USER_CANCELLED);
+            }
+            else {
+                order.setStatus(Status.RESTAURANT_CANCELLED);
             }
             String orderJson = gson.toJson(order, Order.class);
             String request = RequestManager.requestBuild("POST", "/update-order", null, null, orderJson);
@@ -403,6 +464,7 @@ public class DashboardController {
     }
 
     private void handleNewFoodButton() {
+        Food food = new Food();
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Edit Food");
         dialog.setHeaderText(null);
@@ -419,25 +481,57 @@ public class DashboardController {
         TextField priceField = new TextField();
         descriptionField.setPrefRowCount(3);
 
+        GridPane imageGrid = new GridPane();
+        Label imageLabel = new Label("");
+        imageLabel.setVisible(false);
+        Button chooseImageButton = new Button("Choose Image");
+        chooseImageButton.setOnAction(e -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Select Image File");
+
+            FileChooser.ExtensionFilter imageFilter = new FileChooser.ExtensionFilter(
+            "Image Files", "*.png", "*.jpg", "*.jpeg");
+            fileChooser.getExtensionFilters().add(imageFilter);
+
+            File file = fileChooser.showOpenDialog(dialog.getDialogPane().getScene().getWindow());
+            if (file != null) {
+                try {
+                    RandomAccessFile f = new RandomAccessFile(file.getAbsolutePath(), "r");
+                    byte[] bytes = new byte[(int) f.length()];
+                    f.read(bytes);
+                    f.close();
+                    food.setImage(bytes);
+                    imageLabel.setVisible(true);
+                    imageLabel.setText(file.getName());
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+        imageGrid.add(chooseImageButton, 0, 0);
+        imageGrid.add(imageLabel, 2, 0);
+        imageGrid.setHgap(10);
+
         grid.add(new Label("Food Name:"), 0, 0);
         grid.add(nameField, 1, 0);
         grid.add(new Label("Description:"), 0, 1);
         grid.add(descriptionField, 1, 1);
         grid.add(new Label("Price:"), 0, 2);
         grid.add(priceField, 1, 2);
-
+        grid.add(imageGrid, 0, 4, 2, 1);
+        
         dialog.getDialogPane().setContent(grid);
 
         dialog.setResultConverter(dialogButton -> {
         if (dialogButton == saveButtonType) {
             try {
-                Food food = new Food();
                 food.setName(nameField.getText());
                 food.setDescription(descriptionField.getText());
                 Double.parseDouble(priceField.getText());
                 food.setPrice(Double.valueOf(priceField.getText()));
                 food.setRestaurantId(restaurant.getId());
                 food.setEnabled(true);
+                food.setRestaurantName(restaurant.getName());
 
                 String foodJson = gson.toJson(food, Food.class);
                 String request = RequestManager.requestBuild("POST", "/add-food", null, null, foodJson);
@@ -546,7 +640,8 @@ public class DashboardController {
             orderItems.addAll(restaurant.getOrders());
 
         } else if (radioButton == activeOrdersButton) {
-            orderItems.addAll(restaurant.getOrdersInStatus(Status.ACTIVE));
+            orderItems.addAll(restaurant.getOrdersInStatus(Status.PENDING_APPROVAL));
+            orderItems.addAll(restaurant.getOrdersInStatus(Status.PREPARING));
             orderItems.addAll(restaurant.getOrdersInStatus(Status.USER_REQUESTED_CANCEL));
         } else if (radioButton == pastOrdersButton) {
             orderItems.addAll(restaurant.getOrdersInStatus(Status.COMPLETED));
@@ -559,6 +654,37 @@ public class DashboardController {
 
     public static void setRestaurant(Restaurant aRestaurant) {
         restaurant = aRestaurant;
+    }
+
+    private void handleEditRestaurantImage() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Select Image File");
+
+        FileChooser.ExtensionFilter imageFilter = new FileChooser.ExtensionFilter(
+        "Image Files", "*.png", "*.jpg", "*.jpeg");
+        fileChooser.getExtensionFilters().add(imageFilter);
+
+        Label imageLabel = new Label("");
+        imageLabel.setVisible(false);
+        File file = fileChooser.showOpenDialog(outerBox.getScene().getWindow());
+        if (file != null) {
+            try {
+                RandomAccessFile f = new RandomAccessFile(file.getAbsolutePath(), "r");
+                byte[] bytes = new byte[(int) f.length()];
+                f.read(bytes);
+                f.close();
+                restaurantImage.setImage(new Image(new ByteArrayInputStream(bytes)));
+                restaurant.setImage(bytes);
+                imageLabel.setVisible(true);
+                imageLabel.setText(file.getName());
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        String restaurantJson = gson.toJson(restaurant, Restaurant.class);
+        String request = RequestManager.requestBuild("POST", "/update-restaurant-image", null, null, restaurantJson);
+        RequestManager.sendRequest(request);
     }
 
 }

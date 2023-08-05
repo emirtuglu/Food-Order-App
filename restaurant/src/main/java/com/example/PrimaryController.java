@@ -32,11 +32,11 @@ public class PrimaryController {
         String restaurantJson = gson.toJson(enteredRestaurant, Restaurant.class);
         String request = RequestManager.requestBuild("POST", "/restaurant-login", null, null, restaurantJson);
         String response = RequestManager.sendRequest(request);
-        Restaurant restaurant = gson.fromJson(RequestManager.getBody(response), Restaurant.class);
-        DashboardController.setRestaurant(restaurant);
         
-        if (response.contains("200 OK")) {
+        if (response != null && response.contains("200 OK")) {
             try {
+                Restaurant restaurant = gson.fromJson(RequestManager.getBody(response), Restaurant.class);
+                DashboardController.setRestaurant(restaurant);
                 App.startDashboard();
             } catch (Exception e) {
                 System.out.println(e);

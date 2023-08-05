@@ -12,6 +12,7 @@ public class Restaurant {
     private String password;
     private ArrayList<Food> menu;
     private ArrayList<Order> orders;
+    private byte[] image;
 
     public Restaurant() {
     }
@@ -101,6 +102,14 @@ public class Restaurant {
 
     public void setOrders(ArrayList<Order> orders) {
         this.orders = orders;
+    }
+
+    public byte[] getImage() {
+        return this.image;
+    }
+
+    public void setImage(byte[] image) {
+        this.image = image;
     }
 
     @Override

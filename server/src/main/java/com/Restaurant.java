@@ -12,11 +12,12 @@ public class Restaurant {
     private String password;
     private ArrayList<Food> menu;
     private ArrayList<Order> orders;
+    private byte[] image;
 
     public Restaurant() {
     }
 
-    public Restaurant(int id, Address address, String name, String phoneNumber, String mail, ArrayList<Food> menu, ArrayList<Order> orders) {
+    public Restaurant(int id, Address address, String name, String phoneNumber, String mail, ArrayList<Food> menu, ArrayList<Order> orders, byte[] image) {
         this.id = id;
         this.address = address;
         this.name = name;
@@ -24,6 +25,7 @@ public class Restaurant {
         this.mail = mail;
         this.menu = menu;
         this.orders = orders;
+        this.image = image;
     }
 
     public int getId() {
@@ -88,6 +90,14 @@ public class Restaurant {
 
     public void setOrders(ArrayList<Order> orders) {
         this.orders = orders;
+    }
+
+    public byte[] getImage() {
+        return this.image;
+    }
+
+    public void setImage(byte[] image) {
+        this.image = image;
     }
 
     @Override

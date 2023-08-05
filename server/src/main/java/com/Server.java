@@ -256,6 +256,57 @@ public class Server {
             }
         }
 
+        // restaurant endpoint, returns the specified restaurant
+        if (method.equals("GET") && path.equals("/restaurant")) {
+
+            // Check parameters
+            if (!parameters.split("=")[0].equals("restaurantId")) {
+                return "HTTP/1.1 401 Unauthorized\r\n\r\nInvalid parameters";
+            }
+            int restaurantId = Integer.parseInt(parameters.split("=")[1]);
+
+            try {
+                Restaurant restaurant = Database.getRestaurant(restaurantId);
+                String json = gson.toJson(restaurant, Restaurant.class);
+
+                String response = "HTTP/1.1 200 OK\r\n"
+                + "Content-Type: application/json\r\n"
+                + "Content-Length: " + json.length()
+                +"\r\n"
+                + json;
+                return response;
+            } catch (Exception e) {
+                System.out.println(e);
+                return "HTTP/1.1 401 Unauthorized\r\n\r\nCouldn't get restaurant";
+            }
+        }
+
+        // restaurant-info endpoint, returns an object containing essential information of the specified restaurant
+        if (method.equals("GET") && path.equals("/restaurant-info")) {
+
+            // Check parameters
+            if (!parameters.split("=")[0].equals("restaurantId")) {
+                return "HTTP/1.1 401 Unauthorized\r\n\r\nInvalid parameters";
+            }
+            int restaurantId = Integer.parseInt(parameters.split("=")[1]);
+
+            try {
+                Restaurant restaurant = Database.getRestaurantInfo(restaurantId);
+                String json = gson.toJson(restaurant, Restaurant.class);
+
+                String response = "HTTP/1.1 200 OK\r\n"
+                + "Content-Type: application/json\r\n"
+                + "Content-Length: " + json.length()
+                +"\r\n"
+                + json;
+                return response;
+            } catch (Exception e) {
+                System.out.println(e);
+                return "HTTP/1.1 401 Unauthorized\r\n\r\nCouldn't get restaurant";
+            }
+        }
+
+
         // user-orders endpoint, returns orders of the user
         if (method.equals("GET") && path.equals("/user-orders")) {
 
@@ -402,7 +453,7 @@ public class Server {
         // send-order endpoint, user sends an order
         if (method.equals("POST") && path.equals("/send-order")) {
             Order order = gson.fromJson(body, Order.class);
-            order.setStatus(Status.ACTIVE);
+            order.setStatus(Status.PENDING_APPROVAL);
             try {
                 Database.saveOrder(order);
                 return "HTTP/1.1 200 OK\r\n\r\nOrder received";
@@ -432,6 +483,18 @@ public class Server {
             } catch (SQLException e) {
                 System.out.println(e);
                 return "HTTP/1.1 401 Unauthorized\r\n\r\nCouldn't update food";
+            }
+        }
+
+        // update-restaurant-image endpoint, restaurant uploads a new image
+        if (method.equals("POST") && path.equals("/update-restaurant-image")) {
+            Restaurant restaurant = gson.fromJson(body, Restaurant.class);
+            try {
+                Database.updateRestaurantImage(restaurant);
+                return "HTTP/1.1 200 OK\r\n\r\nRestaurant image updated";
+            } catch (SQLException e) {
+                System.out.println(e);
+                return "HTTP/1.1 401 Unauthorized\r\n\r\nCouldn't update restaurant image";
             }
         }
 
@@ -513,7 +576,7 @@ public class Server {
     }
 
     public static boolean isValidName (String name, int length) {
-        return name != null && name.length() < length && name.matches("[0-9a-zA-Z- ]+");
+        return name != null && name.length() < length && name.matches("[0-9a-zA-Z-ğçşıöüĞÇŞİÖÜ ]+");
     }
 
     public static boolean isValidPassword (String password) {

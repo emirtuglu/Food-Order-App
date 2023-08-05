@@ -59,7 +59,7 @@
             android:gravity="left">
 
             <ImageView
-                android:id="@+id/restaurantImage"
+                android:id="@+id/imageViewRestaurant"
                 android:layout_width="72dp"
                 android:layout_height="72dp"
                 android:scaleType="centerCrop"

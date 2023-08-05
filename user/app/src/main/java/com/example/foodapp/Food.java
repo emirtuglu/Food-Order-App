@@ -11,6 +11,7 @@ public class Food {
     private int quantity;
     private double price;
     private boolean enabled;
+    private byte[] image;
 
 
     public Food() {
@@ -95,6 +96,14 @@ public class Food {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public byte[] getImage() {
+        return this.image;
+    }
+
+    public void setImage(byte[] image) {
+        this.image = image;
     }
 
     @Override

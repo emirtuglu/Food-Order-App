@@ -7,6 +7,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,13 +26,14 @@ import java.util.List;
 
 public class CartActivity extends AppCompatActivity {
     private User user;
+    private Restaurant restaurant;
     private ArrayList<Food> cart;
     private Gson gson;
     private FoodsAdapter foodsAdapter;
     private RecyclerView recyclerViewFoods;
     private TextView restaurantName;
     private TextView totalPrice;
-    private ImageView restaurantImage;
+    private ImageView imageViewRestaurant;
     private Button checkoutButton;
 
     @Override
@@ -83,7 +86,7 @@ public class CartActivity extends AppCompatActivity {
         super.onResume();
 
         restaurantName = findViewById(R.id.restaurantName);
-        restaurantImage = findViewById(R.id.restaurantImage);
+        imageViewRestaurant = findViewById(R.id.imageViewRestaurant);
         totalPrice = findViewById(R.id.totalPrice);
         checkoutButton = findViewById(R.id.checkoutButton);
 
@@ -96,17 +99,38 @@ public class CartActivity extends AppCompatActivity {
         } catch (Exception e) {
         }
         String cartJson = RequestManager.getBody(response);
-        if (cartJson.length() > 3) {
+        if (cartJson.length() > 3) { // Cart is not empty
             user.setCart(gson.fromJson(cartJson, new TypeToken<List<Food>>(){}.getType()));
-            restaurantName.setText(user.getCart().get(0).getRestaurantName());
-            restaurantImage.setVisibility(View.VISIBLE);
+
+            RequestManager requestManager2 = new RequestManager();
+            String request2 = RequestManager.requestBuild("GET", "/restaurant-info", "restaurantId", Integer.toString(user.getCart().get(0).getRestaurantId()), null);
+            String response2 = null;
+            try {
+                response2 = requestManager2.execute(request2).get();
+
+                if (response2 != null && response2.contains("200 OK")) {
+                    restaurant = gson.fromJson(RequestManager.getBody(response2), Restaurant.class);
+                }
+            }
+            catch (Exception e) {
+            }
+
+            restaurantName.setText(restaurant.getName());
+            imageViewRestaurant.setVisibility(View.VISIBLE);
+            if (restaurant.getImage() != null) {
+                Bitmap bitmap = BitmapFactory.decodeByteArray(restaurant.getImage(), 0, restaurant.getImage().length);
+                imageViewRestaurant.setImageBitmap(bitmap);
+            }
+            else {
+                imageViewRestaurant.setImageResource(R.drawable.default_restaurant_logo);
+            }
             totalPrice.setVisibility(View.VISIBLE);
             totalPrice.setText("Total Price: ₺" + user.getTotalPriceOfCart());
             checkoutButton.setVisibility(View.VISIBLE);
         }
         else { // Cart is empty
             restaurantName.setText("Your cart is empty");
-            restaurantImage.setVisibility(View.INVISIBLE);
+            imageViewRestaurant.setVisibility(View.INVISIBLE);
             totalPrice.setVisibility(View.INVISIBLE);
             checkoutButton.setVisibility(View.INVISIBLE);
             user.setCart(new ArrayList<Food>());
@@ -124,6 +148,7 @@ public class CartActivity extends AppCompatActivity {
         public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
             private final TextView foodName;
             private final TextView foodPrice;
+            private final ImageView foodImageView;
             private final TextView quantity;
             private final Button minusButton;
             private final Button plusButton;
@@ -132,6 +157,7 @@ public class CartActivity extends AppCompatActivity {
                 super(view);
                 foodName = (TextView) view.findViewById(R.id.foodName);
                 foodPrice = (TextView) view.findViewById(R.id.foodPrice);
+                foodImageView = (ImageView) view.findViewById(R.id.foodImageView);
 
                 minusButton = (Button) view.findViewById(R.id.minusButton);
                 quantity = (TextView) view.findViewById(R.id.quantity);
@@ -144,6 +170,13 @@ public class CartActivity extends AppCompatActivity {
             public void bind(Food food) {
                 foodName.setText(food.getName());
                 foodPrice.setText("₺" + String.format("%.2f", food.getPrice() * food.getQuantity()));
+                if (food.getImage() != null) {
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(food.getImage(), 0, food.getImage().length);
+                    foodImageView.setImageBitmap(bitmap);
+                }
+                else {
+                    foodImageView.setImageResource(R.drawable.default_food_picture);
+                }
                 quantity.setText(String.valueOf(food.getQuantity()));
 
             }
@@ -188,13 +221,13 @@ public class CartActivity extends AppCompatActivity {
                 cart.addAll(user.getCart());
                 if (cart.isEmpty()) {
                     restaurantName.setText("Your cart is empty");
-                    restaurantImage.setVisibility(View.INVISIBLE);
+                    imageViewRestaurant.setVisibility(View.INVISIBLE);
                     totalPrice.setVisibility(View.INVISIBLE);
                     checkoutButton.setVisibility(View.INVISIBLE);
                 }
                 else {
-                    restaurantName.setText(user.getCart().get(0).getRestaurantName());
-                    restaurantImage.setVisibility(View.VISIBLE);
+                    restaurantName.setText(restaurant.getName());
+                    imageViewRestaurant.setVisibility(View.VISIBLE);
                     totalPrice.setVisibility(View.VISIBLE);
                     totalPrice.setText("Total Price: ₺" + user.getTotalPriceOfCart());
                     checkoutButton.setVisibility(View.VISIBLE);

@@ -7,6 +7,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -37,25 +39,45 @@ public class RestaurantMenuActivity extends AppCompatActivity {
 
         RequestManager requestManager = new RequestManager();
         gson = new Gson();
-        String restaurantJson = getIntent().getStringExtra("restaurant");
         String userJson = getIntent().getStringExtra("user");
-        restaurant = gson.fromJson(restaurantJson, Restaurant.class);
+        String restaurantId = getIntent().getStringExtra("restaurantId");
         user = gson.fromJson(userJson, User.class);
+        String request = RequestManager.requestBuild("GET", "/restaurant", "restaurantId", restaurantId, null);
+        String response = null;
+        try {
+            response = requestManager.execute(request).get();
+
+            if (response != null && response.contains("200 OK")) {
+                restaurant = gson.fromJson(RequestManager.getBody(response), Restaurant.class);
+            }
+        }
+        catch (Exception e) {
+        }
+
         if (user.getCart() == null) {
             user.setCart(new ArrayList<Food>());
         }
 
         TextView restaurantName = findViewById(R.id.restaurantName);
         TextView restaurantAddress = findViewById(R.id.restaurantAddress);
+        ImageView imageViewRestaurant = findViewById(R.id.imageViewRestaurant);
 
         restaurantName.setText(restaurant.getName());
         restaurantAddress.setText(restaurant.getAddress().getFullAddress());
+        if (restaurant.getImage() != null) {
+            Bitmap bitmap = BitmapFactory.decodeByteArray(restaurant.getImage(), 0, restaurant.getImage().length);
+            imageViewRestaurant.setImageBitmap(bitmap);
+        }
+        else {
+            imageViewRestaurant.setImageResource(R.drawable.default_restaurant_logo);
+        }
 
-        // Update menu
+        // Update
+        RequestManager requestManager2 = new RequestManager();
         String request2 = RequestManager.requestBuild("GET", "/restaurant-menu", "restaurantId", String.valueOf(restaurant.getId()), null);
         String response2 = null;
         try {
-            response2 = requestManager.execute(request2).get();
+            response2 = requestManager2.execute(request2).get();
         } catch (Exception e) {
 
         }
@@ -74,6 +96,7 @@ public class RestaurantMenuActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent cartActivityIntent = new Intent (view.getContext(), CartActivity.class);
+                user.setCart(new ArrayList<Food>()); // refreshing cart in order to reduce transaction load between intents.
                 cartActivityIntent.putExtra("user", gson.toJson(user, User.class));
                 startActivity(cartActivityIntent);
             }
@@ -130,6 +153,7 @@ public class RestaurantMenuActivity extends AppCompatActivity {
             private final Button minusButton;
             private final TextView quantity;
             private final Button plusButton;
+            private final ImageView foodImageView;
 
             public ViewHolder(View view) {
                 super(view);
@@ -139,6 +163,7 @@ public class RestaurantMenuActivity extends AppCompatActivity {
                 minusButton = (Button) view.findViewById(R.id.minusButton);
                 quantity = (TextView) view.findViewById(R.id.quantity);
                 plusButton = (Button) view.findViewById(R.id.plusButton);
+                foodImageView = (ImageView) view.findViewById(R.id.foodImageView);
 
                 minusButton.setOnClickListener(this);
                 plusButton.setOnClickListener(this);
@@ -171,6 +196,13 @@ public class RestaurantMenuActivity extends AppCompatActivity {
                 foodDescription.setText(food.getDescription());
                 foodPrice.setText("₺" + String.valueOf(food.getPrice()));
                 quantity.setText(String.valueOf(food.getQuantity()));
+                if (food.getImage() != null) {
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(food.getImage(), 0, food.getImage().length);
+                    foodImageView.setImageBitmap(bitmap);
+                }
+                else {
+                    foodImageView.setImageResource(R.drawable.default_food_picture);
+                }
                 if (!food.isEnabled()) {
                     itemView.setAlpha((float) 0.50);
                     itemView.setBackgroundColor(getResources().getColor(R.color.gray_out));
